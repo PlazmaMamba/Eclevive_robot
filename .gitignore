@@ -18,6 +18,23 @@ __pycache__/
 *.db3
 *.bag
 *.mcap
+*.pdf
+*.gv
+
+# ログファイル・一時ファイル
+*.log
+*.txt
+*.meta
+*.backup
+.claudeignore
+
+# テストスクリプト
+test_*.sh
+build_*.sh
+
+# ドキュメント（README.md以外）
+*.md
+!README.md
 
 # IDEs
 .vscode/
