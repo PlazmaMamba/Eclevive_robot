@@ -81,6 +81,9 @@ src/gazebo_ros_pkgs/
 src/eProsima/
 
 # その他除外
+.claude/
+firmware/
+isaac_ros_assets/
 rtl8852cu-20240510/
 src/jsk_visualization/
 src/negotiated/
