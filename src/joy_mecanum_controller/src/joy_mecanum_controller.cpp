@@ -75,11 +75,11 @@ private:
             navigation_activate = 0;
         }
 
-        else if(joyMsg->buttons[0] == 1){//□ボタン　グリッパ把持
+        else if(joyMsg->buttons[0] == 1){// Square button - Gripper grasp
              //jointStateMsg.position[3]=-0.96;
              gripper_activate=1;
         }
-        else if(joyMsg->buttons[2] == 1){//○ボタン　グリッパ開放
+        else if(joyMsg->buttons[2] == 1){// Circle button - Gripper release
             jointStateMsg.position[3]=0.0;
             gripper_activate=0;
         }
@@ -160,11 +160,11 @@ private:
         else{
             jointStateMsg.position[0]=-0.6;
         }
-        jointStateMsg.position[1] = joyMsg->axes[4]*1.0;//R2ボタン第1関節下げる
-        jointStateMsg.position[2] = joyMsg->axes[3]*1.0;//L2ボタン第2関節上げる
-        //↓上下ボタンによるグリッパー把持
+        jointStateMsg.position[1] = joyMsg->axes[4]*1.0;// R2 button - Lower joint 1
+        jointStateMsg.position[2] = joyMsg->axes[3]*1.0;// L2 button - Raise joint 2
+        // Gripper grasp by up/down buttons
         if(abs(joyMsg->axes[7])>0){
-            gripper_activate=0;//グリッパを把持しようとしていたならoffにする
+            gripper_activate=0;// Turn off if gripper was attempting to grasp
             if(jointStateMsg.position[3]<=0.3 && jointStateMsg.position[3]>=-1.05){
                 jointStateMsg.position[3] = jointStateMsg.position[3]+joyMsg->axes[7]*0.04;
                 
@@ -183,7 +183,7 @@ private:
 
     void cmdCallback(const geometry_msgs::msg::Twist::SharedPtr cmdMsg)
     {
-        if(navigation_activate ==1){   //ナビゲーションモードならすぐに配信する         
+        if(navigation_activate ==1){   // Publish immediately if in navigation mode
             cmdVelMsg.linear.x = cmdMsg->linear.x;
             cmdVelMsg.linear.y = cmdMsg->linear.y;
             cmdVelMsg.linear.z = 0.0;
@@ -212,7 +212,7 @@ private:
 
     void timerCallback()
     {
-        //マニュアルモードならタイマー時間でpublishする
+        // Publish at timer interval if in manual mode
         if(navigation_activate == 0){
             cmdVelPublisher_ ->publish(cmdVelMsg);
         }
@@ -220,7 +220,7 @@ private:
 
     void arm_timerCallback()
     {
-        //もしgripper_Activate=1ならグリッパーを閉じていく。0になれば閉じるのを止める。
+        // If gripper_Activate=1, close the gripper. Stop closing when it reaches 0.
         if(gripper_activate==1){
             if(jointStateMsg.position[3]>-1.05){
                 jointStateMsg.position[3]=jointStateMsg.position[3]-0.07;
@@ -232,20 +232,20 @@ private:
                 ,int(jointStateMsg.position[3]*200)
                 };
 
-        //マニュアルモードならタイマー時間でpublishする
+        // Publish at timer interval if in manual mode
         if(navigation_activate == 0){
             jointStatePublisher_->publish(jointStateMsg);
-            intarrayPublisher_->publish(arm_message);    
-        }        
+            intarrayPublisher_->publish(arm_message);
+        }
     }
 
-    //グリッパーの負荷を検出し、グリッパーの開閉を調整する
+    // Detect gripper load and adjust gripper opening/closing
     void loadCallback(const std_msgs::msg::Float32::SharedPtr loadMsg)
     {
-        if(loadMsg->data >1500){//グリッパーの最大荷重を1500gとする
-            gripper_activate=0; 
+        if(loadMsg->data >1500){// Set maximum gripper load to 1500g
+            gripper_activate=0;
             jointStateMsg.position[3] =jointStateMsg.position[3] +0.002;
-            //jointStateMsg.position[3] = jointStateMsg.position[3]+0.002;//口を開く
+            //jointStateMsg.position[3] = jointStateMsg.position[3]+0.002;// Open mouth
             arm_message.data ={int(jointStateMsg.position[0]*200)
                             ,int(jointStateMsg.position[1]  *200)
                             ,int(jointStateMsg.position[2]  *200)

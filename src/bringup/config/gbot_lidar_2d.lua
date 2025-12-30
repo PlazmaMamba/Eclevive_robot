@@ -25,11 +25,11 @@ options = {
   --provide_odom_frame = true,
   provide_odom_frame = false,
   publish_frame_projected_to_2d = true,
-  --use_odometry = false, trueにしてzedのodomを利用する
+  --use_odometry = false, Set to true to use ZED odometry
   use_odometry = true, 
   use_nav_sat = false,
-  -- >       有効にすると、sensor_msgs/NavSatFix の "fix" というトピックを Subscribeする。
-  -- >       この場合、ナビゲーションデータが提供されている必要があり、その情報はグローバルSLAMに利用される。
+  -- >       When enabled, subscribes to "fix" topic of sensor_msgs/NavSatFix.
+  -- >       In this case, navigation data must be provided, and this information is used for global SLAM.
   use_landmarks = false,
   num_laser_scans = 1,
   num_multi_echo_laser_scans = 0,

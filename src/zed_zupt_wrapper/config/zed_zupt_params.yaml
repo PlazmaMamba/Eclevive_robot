@@ -1,69 +1,69 @@
 zed_zupt_filter_node:
   ros__parameters:
-    # トピック設定
+    # Topic settings
     input_odom_topic: "/zed/zed_node/odom"
     input_imu_topic: "/zed/zed_node/imu/data"
     output_odom_topic: "/zed/zed_node/odom_zupt"
 
     # ========================================
-    # ZUPT検出パラメータ
+    # ZUPT detection parameters
     # ========================================
 
-    # 静止判定の加速度閾値（m/s²）
-    # ロボットが静止していると判定する最大加速度
-    # - 低すぎる: 微小な振動でも移動と判定 → ZUPT効果減少
-    # - 高すぎる: 実際に移動していても静止と誤判定
-    # 推奨値: 0.3-0.7 m/s²
+    # Acceleration threshold for stationary detection (m/s²)
+    # Maximum acceleration for determining robot is stationary
+    # - Too low: Even small vibrations detected as movement → Reduced ZUPT effectiveness
+    # - Too high: May incorrectly detect movement as stationary
+    # Recommended value: 0.3-0.7 m/s²
     zupt_accel_threshold: 0.7 #0.5
 
-    # 静止判定の角速度閾値（rad/s）
-    # ロボットが静止していると判定する最大角速度
-    # - 低すぎる: 微小な回転でも移動と判定
-    # - 高すぎる: 実際に回転していても静止と誤判定
-    # 推奨値: 0.05-0.15 rad/s
+    # Angular velocity threshold for stationary detection (rad/s)
+    # Maximum angular velocity for determining robot is stationary
+    # - Too low: Even small rotations detected as movement
+    # - Too high: May incorrectly detect rotation as stationary
+    # Recommended value: 0.05-0.15 rad/s
     zupt_gyro_threshold: 0.1
 
-    # ZUPT判定ウィンドウサイズ（サンプル数）
-    # この数のIMUサンプルを使って静止判定を行う
-    # - 小さい: 反応が速いが、ノイズに弱い
-    # - 大きい: 安定するが、反応が遅い
-    # ZED2i IMUは400Hzなので:
-    #   10サンプル = 25ms
-    #   20サンプル = 50ms
-    #   40サンプル = 100ms
-    # 推奨値: 10-30
+    # ZUPT detection window size (number of samples)
+    # Number of IMU samples used for stationary detection
+    # - Small: Fast response but susceptible to noise
+    # - Large: More stable but slower response
+    # For ZED2i IMU at 400Hz:
+    #   10 samples = 25ms
+    #   20 samples = 50ms
+    #   40 samples = 100ms
+    # Recommended value: 10-30
     zupt_window_size: 25 #15
 
-    # ZUPT信頼度閾値（0.0-1.0）
-    # ウィンドウ内で何％のサンプルが静止条件を満たせば静止と判定するか
-    # - 低い: 静止判定が出やすい（積極的な補正）
-    # - 高い: 確実に静止している時のみ判定（保守的な補正）
-    # 推奨値: 0.6-0.8
+    # ZUPT confidence threshold (0.0-1.0)
+    # Percentage of samples in window that must meet stationary conditions
+    # - Low: Easier to trigger stationary detection (aggressive correction)
+    # - High: Only triggers when certainly stationary (conservative correction)
+    # Recommended value: 0.6-0.8
     zupt_confidence_threshold: 0.9 #0.7
 
     # ========================================
-    # オドメトリ補正パラメータ
+    # Odometry correction parameters
     # ========================================
 
-    # 最大速度ジャンプ制限（m/s）
-    # 1サンプル間での速度変化の最大値
-    # 暴走による急激な速度変化を抑制
-    # 推奨値: 0.3-0.7 m/s
+    # Maximum velocity jump limit (m/s)
+    # Maximum velocity change between samples
+    # Suppresses sudden velocity changes due to drift
+    # Recommended value: 0.3-0.7 m/s
     max_velocity_jump: 0.5
 
-    # 最大角速度ジャンプ制限（rad/s）
-    # 1サンプル間での角速度変化の最大値
-    # 推奨値: 0.5-1.5 rad/s
+    # Maximum angular velocity jump limit (rad/s)
+    # Maximum angular velocity change between samples
+    # Recommended value: 0.5-1.5 rad/s
     max_angular_jump: 1.0
 
-    # 速度減衰率（0.0-1.0）
-    # 静止判定時に速度をどれだけ減衰させるか
-    # - 1.0に近い: 速度が徐々に減少（滑らか）
-    # - 0.0に近い: 速度が急激にゼロになる
-    # 推奨値: 0.9-0.98
+    # Velocity decay rate (0.0-1.0)
+    # How much to decay velocity when stationary is detected
+    # - Close to 1.0: Velocity decreases gradually (smooth)
+    # - Close to 0.0: Velocity drops to zero rapidly
+    # Recommended value: 0.9-0.98
     velocity_decay_rate: 0.95
 
-    # ZUPT有効化フラグ
-    # false: ZUPTフィルタを無効化（スルーモード）
-    # true: ZUPTフィルタを有効化
+    # ZUPT enable flag
+    # false: Disable ZUPT filter (passthrough mode)
+    # true: Enable ZUPT filter
     enable_zupt: true

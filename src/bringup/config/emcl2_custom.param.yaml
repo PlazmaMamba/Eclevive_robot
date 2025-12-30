@@ -1,13 +1,13 @@
 /**:
   ros__parameters:
     odom_freq: 20
-    transform_tolerance: 10.0           # ZEDカメラ初期化待機のため大幅増加
+    transform_tolerance: 10.0           # Significantly increased for ZED camera initialization wait
     global_frame_id: "map"
     odom_frame_id: "zed_odom"           # ZED Visual Odometry
-    base_frame_id: "zed_camera_link"    # ZEDカメラフレーム
-    footprint_frame_id: "zed_camera_link"  # ZEDカメラフレーム
-    laser_min_range: 0.1                # LiDARの最小範囲 (0.1m)
-    laser_max_range: 15.0               # LiDARの最大範囲 (15m)
+    base_frame_id: "zed_camera_link"    # ZED camera frame
+    footprint_frame_id: "zed_camera_link"  # ZED camera frame
+    laser_min_range: 0.1                # LiDAR minimum range (0.1m)
+    laser_max_range: 15.0               # LiDAR maximum range (15m)
     scan_increment: 1
     initial_pose_x: 0.0
     initial_pose_y: 0.0
@@ -19,9 +19,9 @@
     extraction_rate: 0.1
     range_threshold: 0.3
     sensor_reset: false
-    # ZED Visual Odometryは高精度なので、オドメトリの信頼度を高く設定
-    odom_fw_dev_per_fw: 0.10           # 並進の信頼度を高く
+    # ZED Visual Odometry is high precision, so set odometry confidence high
+    odom_fw_dev_per_fw: 0.10           # High translation confidence
     odom_fw_dev_per_rot: 0.0001
-    odom_rot_dev_per_fw: 0.05          # 回転の信頼度を高く
-    odom_rot_dev_per_rot: 0.10         # 回転の信頼度を高く
+    odom_rot_dev_per_fw: 0.05          # High rotation confidence
+    odom_rot_dev_per_rot: 0.10         # High rotation confidence
     laser_likelihood_max_dist: 0.2

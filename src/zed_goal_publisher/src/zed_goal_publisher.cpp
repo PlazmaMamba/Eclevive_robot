@@ -24,19 +24,19 @@ using NavigateToPose = nav2_msgs::action::NavigateToPose;
 using GoalHandleNavigateToPose = rclcpp_action::ClientGoalHandle<NavigateToPose>;
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 
-// アームポーズを表す構造体
+// Structure representing arm pose
 struct ArmPose {
     int32_t joint0;
     int32_t joint1;
     int32_t joint2;
     int32_t joint3;
-    int duration_ms;  // このポーズを保持する時間（ミリ秒）
+    int duration_ms;  // Time to hold this pose (milliseconds)
 };
 
 class GoalPublisher : public rclcpp::Node {
 public:
     GoalPublisher() : Node("zed_goal_publisher") {
-        // トピック名のパラメータ宣言
+        // Topic name parameter declaration
         std::string skeleton_topic = this->declare_parameter<std::string>("skeleton_topic", "zed/zed_node/body_trk/skeletons");
         std::string target_arm_pose_topic = this->declare_parameter<std::string>("target_arm_pose_topic", "target_arm_pose");
         std::string current_arm_pose_topic = this->declare_parameter<std::string>("current_arm_pose_topic", "current_arm_pose");
@@ -44,7 +44,7 @@ public:
         std::string goal_pose_topic = this->declare_parameter<std::string>("goal_pose_topic", "goal_pose");
         std::string zed_goal_status_topic = this->declare_parameter<std::string>("zed_goal_status_topic", "zed_goal_status");
 
-        // 速度パラメータの宣言
+        // Velocity parameter declaration
         forward_vel_fast_ = this->declare_parameter<double>("forward_vel_fast", 0.5);
         forward_vel_slow_ = this->declare_parameter<double>("forward_vel_slow", 0.1);
         turn_right_vel_fast_ = this->declare_parameter<double>("turn_right_vel_fast", 1.6);
@@ -56,7 +56,7 @@ public:
         strafe_left_vel_fast_ = this->declare_parameter<double>("strafe_left_vel_fast", -0.70);
         strafe_left_vel_slow_ = this->declare_parameter<double>("strafe_left_vel_slow", -0.10);
 
-        // ★ フェーズ1改良: マジックナンバーのパラメータ化
+        // Phase 1 improvement: Parameterization of magic numbers
         hand_raise_threshold_ = this->declare_parameter<double>("hand_raise_threshold", 0.3);
         target_distance_min_ = this->declare_parameter<double>("target_distance_min", 1.0);
         target_person_offset_ = this->declare_parameter<double>("target_person_offset", 0.6);
@@ -70,14 +70,14 @@ public:
         RCLCPP_INFO(this->get_logger(), "  close_approach_distance: %.2f m", close_approach_distance_);
         RCLCPP_INFO(this->get_logger(), "======================================");
 
-        // ZEDで人物認識した内容をsubscribeする
+        // Subscribe to human recognition content from ZED
         objectSubscriber_ = this->create_subscription<zed_msgs::msg::ObjectsStamped>(
             skeleton_topic, 1, std::bind(&GoalPublisher::objectCallback, this, std::placeholders::_1));
 
         arm_pose_Subscriber_ = this->create_subscription<std_msgs::msg::Int32MultiArray>(
             target_arm_pose_topic, 1, std::bind(&GoalPublisher::arm_pose_Callback, this, std::placeholders::_1));
 
-        // joyトピックをsubscribeする
+        // Subscribe to joy topic
         joySubscriber_ = this->create_subscription<sensor_msgs::msg::Joy>(
             "joy", 1, std::bind(&GoalPublisher::joyCallback, this, std::placeholders::_1));
 
@@ -100,12 +100,12 @@ public:
         // Action client
         action_client_ = rclcpp_action::create_client<NavigateToPose>(this, "navigate_to_pose");
 
-        // ★ フェーズ1改良: 非同期アームモーションタイマー
+        // Phase 1 improvement: Asynchronous arm motion timer
         arm_motion_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(arm_motion_interval_ms_),
             std::bind(&GoalPublisher::executeArmMotionStep, this));
 
-        // メンバ変数の初期化
+        // Initialize member variables
         arm_message_.data = {0, 0, 0, 0};
         cmdVelMsg_.linear.x = 0.0;
         cmdVelMsg_.linear.y = 0.0;
@@ -146,7 +146,7 @@ private:
             return;
         }
 
-        // アクション Goalの作成
+        // Create action Goal
         auto goal_msg = NavigateToPose::Goal();
         goal_msg.pose.header.stamp = this->now();
         goal_msg.pose.header.frame_id = "map";
@@ -158,15 +158,15 @@ private:
         goal_msg.pose.pose.orientation.z = tf.transform.rotation.z;
         goal_msg.pose.pose.orientation.w = tf.transform.rotation.w;
 
-        // Feedbackコールバックを設定
+        // Set feedback callback
         auto send_goal_options = rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
         send_goal_options.feedback_callback = std::bind(&GoalPublisher::feedbackCallback, this, std::placeholders::_1, std::placeholders::_2);
         send_goal_options.result_callback   = std::bind(&GoalPublisher::resultCallback, this, std::placeholders::_1);
 
-        // Goal をサーバーに送信
+        // Send Goal to server
         action_client_->async_send_goal(goal_msg, send_goal_options);
 
-        // goal_poseトピックにも公開
+        // Also publish to goal_pose topic
         PoseStamped goal_pose_msg;
         goal_pose_msg.header.stamp = this->now();
         goal_pose_msg.header.frame_id = "map";
@@ -191,17 +191,17 @@ private:
             goal_msg.pose.pose.orientation.w);
     }
 
-//---------------------- ★ フェーズ1改良: アームモーション管理 ---------------------------------------------------
-    // アームシーケンスを登録
+//---------------------- Phase 1 improvement: Arm motion management ---------------------------------------------------
+    // Register arm sequence
     void scheduleArmWaveSequence(double target_angle) {
         int angle_deg = static_cast<int>(target_angle * 80.0);
 
-        arm_motion_queue_ = std::queue<ArmPose>();  // クリア
+        arm_motion_queue_ = std::queue<ArmPose>();  // Clear
 
-        // 初期位置
+        // Initial position
         arm_motion_queue_.push({angle_deg, 200, 200, -200, 600});
 
-        // 手を振るシーケンス
+        // Hand waving sequence
         arm_motion_queue_.push({angle_deg, arm_message_.data[1], arm_message_.data[2], 20, 600});
         arm_motion_queue_.push({angle_deg, arm_message_.data[1], arm_message_.data[2], -160, 600});
         arm_motion_queue_.push({angle_deg, arm_message_.data[1], arm_message_.data[2], 0, 600});
@@ -211,18 +211,18 @@ private:
     void scheduleArmGreetSequence(double target_angle) {
         int angle_deg = static_cast<int>(target_angle * 80.0);
 
-        arm_motion_queue_ = std::queue<ArmPose>();  // クリア
+        arm_motion_queue_ = std::queue<ArmPose>();  // Clear
 
-        // ★ 追加: まず人の方向に向く（方向調整フェーズ）
+        // Addition: First face the person (direction adjustment phase)
         arm_motion_queue_.push({angle_deg, 200, 200, -200, 600});
 
-        // ★ 追加: 手を振って認識を示す
+        // Addition: Wave hand to show recognition
         arm_motion_queue_.push({angle_deg, arm_message_.data[1], arm_message_.data[2], -120, 200});
         arm_motion_queue_.push({angle_deg, arm_message_.data[1], arm_message_.data[2], -200, 200});
         arm_motion_queue_.push({angle_deg, arm_message_.data[1], arm_message_.data[2], -120, 200});
         arm_motion_queue_.push({angle_deg, arm_message_.data[1], arm_message_.data[2], -200, 200});
 
-        // 挨拶シーケンス（元のコード）
+        // Greeting sequence (original code)
         arm_motion_queue_.push({angle_deg, 200 ,   40, -200, 600});
         arm_motion_queue_.push({angle_deg, 100 ,  -40, -200, 600});
         arm_motion_queue_.push({angle_deg, 50  , -120, -200, 600});
@@ -235,22 +235,22 @@ private:
         arm_motion_queue_.push({angle_deg, 200 ,  200, -200, 600});
     }
 
-    // タイマーで呼ばれる：キューから1ステップずつ実行
+    // Called by timer: Execute one step at a time from the queue
     void executeArmMotionStep() {
         if (arm_motion_queue_.empty()) {
-            return;  // キューが空なら何もしない
+            return;  // Do nothing if queue is empty
         }
 
-        // 前回のポーズから経過時間をチェック
+        // Check elapsed time from previous pose
         auto now = this->now();
         if (last_arm_motion_time_.seconds() > 0.0) {
             auto elapsed_ms = (now - last_arm_motion_time_).seconds() * 1000.0;
             if (elapsed_ms < current_arm_duration_ms_) {
-                return;  // まだ待機時間中
+                return;  // Still in waiting time
             }
         }
 
-        // 次のポーズを取り出して実行
+        // Extract and execute the next pose
         ArmPose pose = arm_motion_queue_.front();
         arm_motion_queue_.pop();
 
@@ -260,16 +260,16 @@ private:
         current_arm_duration_ms_ = pose.duration_ms;
         last_arm_motion_time_ = now;
 
-        // 最後のポーズなら現在角度を出力
+        // Output current angle if this is the last pose
         if (arm_motion_queue_.empty()) {
             current_arm_pose_Publisher_->publish(arm_message_);
         }
     }
 
-//---------------------- ZED2iで人物認識した内容の処理を行う ---------------------------------------------------
+//---------------------- Process human recognition content from ZED2i ---------------------------------------------------
     void objectCallback(const zed_msgs::msg::ObjectsStamped::SharedPtr objMsg)
     {
-        // navigation_activate_が0（manual mode）の場合は処理を停止
+        // Stop processing if navigation_activate_ is 0 (manual mode)
         if (navigation_activate_ == 0) {
             return;
         }
@@ -278,12 +278,12 @@ private:
             return;
         }
 
-        // 人物認識通知
+        // Person recognition notification
         if (zed_goal_msg.data < 1) {
             zed_goal_msg.data = 1;
         }
 
-        // 複数人の中から最も遠い手上げ人を探す
+        // Search for the person with raised hand who is farthest away
         for (uint i = 0; i < objMsg->objects.size(); i++) {
             const auto& obj = objMsg->objects[i];
 
@@ -291,10 +291,10 @@ private:
                 continue;
             }
 
-            // ★ フェーズ1改良: エラーハンドリング強化
+            // Phase 1 improvement: Enhanced error handling
             const size_t keypoints_count = obj.skeleton_3d.keypoints.size();
 
-            // 骨格キーポイント取得（範囲チェック付き）
+            // Get skeleton keypoints (with range check)
             for (int pose_count = 2; pose_count <= 7; pose_count++) {
                 if (pose_count >= static_cast<int>(keypoints_count)) {
                     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
@@ -304,7 +304,7 @@ private:
                     continue;
                 }
 
-                // X方向（左右）
+                // X direction (left-right)
                 if (pose_count >= 3 && pose_count < static_cast<int>(keypoints_count)) {
                     if (std::isnan(obj.skeleton_3d.keypoints[3].kp[1])) {
                         body_pose_x[pose_count] = 0.0;
@@ -313,7 +313,7 @@ private:
                     }
                 }
 
-                // Y方向（上下）
+                // Y direction (up-down)
                 if (pose_count >= 3 && pose_count < static_cast<int>(keypoints_count)) {
                     if (std::isnan(obj.skeleton_3d.keypoints[3].kp[2])) {
                         body_pose_y[pose_count] = 0.0;
@@ -327,26 +327,26 @@ private:
             target_point.y = obj.position[1];
             target_point.z = obj.position[2];
 
-            // ★ 修正: 人が近くにいる場合は手を上げていなくてもアーム動作を実行
+            // Fix: Execute arm motion even if hand is not raised when person is nearby
             if (target_point.x < close_approach_distance_ && target_point.x > 0.1) {
-                // 近くに人がいる場合の挨拶シーケンス
+                // Greeting sequence when person is nearby
                 RCLCPP_INFO(this->get_logger(),"=== Person Nearby - Greeting ===");
                 RCLCPP_INFO(this->get_logger(), "Distance: %.3f m", target_point.x);
 
-                // ★ 追加: 人の方向を向いてから挨拶する
+                // Addition: Face the person before greeting
                 double target_angle = std::atan(target_point.y / target_point.x);
 
-                // 人の方向に向いて手を振ってから挨拶シーケンスを実行
+                // Execute greeting sequence after facing and waving at the person
                 scheduleArmGreetSequence(target_angle);
 
-                zed_goal_msg.data = 3;  // ゴール到達通知
+                zed_goal_msg.data = 3;  // Goal reached notification
                 person_finding = false;
-                break;  // 近接処理を優先して終了
+                break;  // Exit with priority on proximity processing
             }
 
-            // ★ フェーズ1改良: パラメータ化された閾値使用
-            // 肩から上に手を上げた人を見つける
-            // ZED座標系：Z軸が上向き（Z値が大きいほど高い位置）
+            // Phase 1 improvement: Use parameterized thresholds
+            // Find a person who has raised their hand above the shoulder
+            // ZED coordinate system: Z-axis points upward (higher Z value means higher position)
             bool right_hand_raised = (body_pose_y[4] > (body_pose_y[2] + hand_raise_threshold_));
             bool left_hand_raised = (body_pose_y[7] > (body_pose_y[5] + hand_raise_threshold_));
 
@@ -356,7 +356,7 @@ private:
                 compare_point.y = obj.position[1];
                 compare_point.z = obj.position[2];
 
-                // より遠くの人をターゲットにする
+                // Target the person who is farther away
                 if (compare_point.x > target_point.x) {
                     target_point.x = obj.position[0];
                     target_point.y = obj.position[1];
@@ -367,9 +367,9 @@ private:
                 RCLCPP_INFO(this->get_logger(), "Position: (%.3f, %.3f, %.3f)",
                     target_point.x, target_point.y, target_point.z);
 
-                zed_goal_msg.data = 2;  // 目標発見通知
+                zed_goal_msg.data = 2;  // Target discovery notification
 
-                // ★ フェーズ1改良: 非同期アームモーション
+                // Phase 1 improvement: Asynchronous arm motion
                 double target_angle = std::atan(target_point.y / target_point.x);
                 scheduleArmWaveSequence(target_angle);
 
@@ -379,9 +379,9 @@ private:
             }
         }
 
-        // ★ フェーズ1改良: パラメータ化された距離閾値使用
+        // Phase 1 improvement: Use parameterized distance threshold
         if (target_point.x > target_distance_min_) {
-            // 目標となる人のTF（target_person）を生成する
+            // Generate TF (target_person) of the target person
             static_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
             geometry_msgs::msg::TransformStamped transformStamped;
             transformStamped.header.stamp = this->now();
@@ -399,29 +399,29 @@ private:
 
             static_tf_broadcaster_->sendTransform(transformStamped);
 
-            // 目標位置を生成してナビゲーションを開始
+            // Generate target position and start navigation
             set_goal_point();
         }
-        // else if (target_point.x < close_approach_distance_) は
-        // forループ内で処理済み（322-333行目）のため削除
+        // else if (target_point.x < close_approach_distance_) is
+        // already processed within for loop (lines 322-333), so it is removed
 
-        // target_pointを初期化
+        // Initialize target_point
         target_point.x = 0.001;
         target_point.y = 0.0001;
         target_point.z = 0.0001;
     }
 
-//------------------- joyコールバック ---------------------------------------------------
+//------------------- Joy callback ---------------------------------------------------
     void joyCallback(const sensor_msgs::msg::Joy::SharedPtr joyMsg)
     {
-        // ボタン9（OPTIONS）: navigation mode
+        // Button 9 (OPTIONS): navigation mode
         if (joyMsg->buttons[9] == 1) {
             RCLCPP_INFO(this->get_logger(), "********************************");
             RCLCPP_INFO(this->get_logger(), "     NAVIGATION MODE            ");
             RCLCPP_INFO(this->get_logger(), "********************************");
             navigation_activate_ = 1;
         }
-        // ボタン12（PS）: manual mode
+        // Button 12 (PS): manual mode
         else if (joyMsg->buttons[12] == 1) {
             RCLCPP_INFO(this->get_logger(), "********************************");
             RCLCPP_INFO(this->get_logger(), "     MANUAL MODE                ");
@@ -430,7 +430,7 @@ private:
         }
     }
 
-//-------------------現状のアーム角度を取得する -------------------------------------------
+//------------------- Get current arm angle -------------------------------------------
     void arm_pose_Callback(const std_msgs::msg::Int32MultiArray::SharedPtr msgin)
     {
         if (msgin->data.size() >= 4) {
@@ -441,7 +441,7 @@ private:
         }
     }
 
-//------------------1秒ごとにodomとZED2カメラの位置を取得する--------------------------------------
+//------------------ Get odom and ZED2 camera position every second --------------------------------------
     void on_timer()
     {
         geometry_msgs::msg::TransformStamped t;
@@ -466,14 +466,14 @@ private:
         }
     }
 
-    //------------action_client_のfeedbackを生成-----------------------------------------------------------
+    //------------ Generate feedback for action_client_ -----------------------------------------------------------
     void feedbackCallback(GoalHandleNavigateToPose::SharedPtr,
                          const std::shared_ptr<const NavigateToPose::Feedback> feedback)
     {
         RCLCPP_INFO(get_logger(), "Distance remaining = %.2f m", feedback->distance_remaining);
     }
 
-    //------------action_client_のresultを生成-----------------------------------------------------------
+    //------------ Generate result for action_client_ -----------------------------------------------------------
     void resultCallback(const GoalHandleNavigateToPose::WrappedResult & result)
     {
         switch (result.code) {
@@ -517,7 +517,7 @@ private:
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr zed_goal_status_;
     rclcpp::TimerBase::SharedPtr timer_{nullptr};
 
-    // ★ フェーズ1改良: アームモーション用タイマーとキュー
+    // Phase 1 improvement: Timer and queue for arm motion
     rclcpp::TimerBase::SharedPtr arm_motion_timer_;
     std::queue<ArmPose> arm_motion_queue_;
     rclcpp::Time last_arm_motion_time_{0, 0, RCL_ROS_TIME};
@@ -539,7 +539,7 @@ private:
     geometry_msgs::msg::Twist cmdVelMsg_;
     int navigation_activate_ = 0;
 
-    // 速度パラメータ
+    // Velocity parameters
     double forward_vel_fast_;
     double forward_vel_slow_;
     double turn_right_vel_fast_;
@@ -551,7 +551,7 @@ private:
     double strafe_left_vel_fast_;
     double strafe_left_vel_slow_;
 
-    // ★ フェーズ1改良: パラメータ化された閾値
+    // Phase 1 improvement: Parameterized thresholds
     double hand_raise_threshold_;
     double target_distance_min_;
     double target_person_offset_;

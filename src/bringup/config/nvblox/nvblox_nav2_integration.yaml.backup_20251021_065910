@@ -1,50 +1,50 @@
 /**:
   ros__parameters:
     # ========================================
-    # Nav2統合設定
+    # Nav2 integration settings
     # ========================================
 
-    # Global Frame設定（Nav2がmapフレームを期待）
+    # Global Frame settings (Nav2 expects map frame)
     global_frame: "map"
 
-    # Occupancy Grid出力を有効化
-    # nvbloxはデフォルトでstatic_occupancy_layerを~/static_occupancy_layerに出力
-    # これを/mapにリマップして使用
+    # Enable Occupancy Grid output
+    # nvblox outputs static_occupancy_layer to ~/static_occupancy_layer by default
+    # Remap this to /map for use
 
-    # Map publishing設定
-    publish_occupancy_layer: true           # Occupancy Grid出力を有効化
-    publish_layer_rate_hz: 5.0             # マップ公開頻度（Hz）
+    # Map publishing settings
+    publish_occupancy_layer: true           # Enable Occupancy Grid output
+    publish_layer_rate_hz: 5.0             # Map publishing frequency (Hz)
 
     # Map resolution
-    voxel_size: 0.05                       # 解像度5cm（Nav2と一致）
+    voxel_size: 0.05                       # 5cm resolution (matches Nav2)
 
     # ========================================
-    # TSDF設定（静的マッピング用）
+    # TSDF settings (for static mapping)
     # ========================================
-    mapping_type: "static_tsdf"            # TSDFベースの静的マッピング
+    mapping_type: "static_tsdf"            # TSDF-based static mapping
 
     # ========================================
-    # Occupancy Grid変換設定
+    # Occupancy Grid conversion settings
     # ========================================
     static_mapper:
-      # Occupancy確率設定
-      free_region_occupancy_probability: 0.3        # 空き領域の確率（低め）
-      occupied_region_occupancy_probability: 0.9    # 占有領域の確率（高め）
-      unobserved_region_occupancy_probability: 0.5  # 未観測領域の確率（中間）
+      # Occupancy probability settings
+      free_region_occupancy_probability: 0.3        # Free region probability (low)
+      occupied_region_occupancy_probability: 0.9    # Occupied region probability (high)
+      unobserved_region_occupancy_probability: 0.5  # Unobserved region probability (medium)
 
-      # Occupancy判定の幅
-      occupied_region_half_width_m: 0.1    # 障害物判定の半幅（10cm）
-
-    # ========================================
-    # Map更新頻度の調整
-    # ========================================
-    # Occupancy Grid更新頻度
-    decay_tsdf_rate_hz: 5.0                # TSDF減衰レート
-    clear_map_outside_radius_rate_hz: 1.0  # マップクリア頻度
+      # Occupancy judgment width
+      occupied_region_half_width_m: 0.1    # Obstacle judgment half-width (10cm)
 
     # ========================================
-    # QoS設定（Nav2互換性）
+    # Map update frequency adjustment
     # ========================================
-    # Nav2はTransient Localでマップを期待
-    # nvbloxのデフォルト出力はVolatileなので、
-    # static_transform_publisherやtopic_toolsで変換が必要
+    # Occupancy Grid update frequency
+    decay_tsdf_rate_hz: 5.0                # TSDF decay rate
+    clear_map_outside_radius_rate_hz: 1.0  # Map clearing frequency
+
+    # ========================================
+    # QoS settings (Nav2 compatibility)
+    # ========================================
+    # Nav2 expects map with Transient Local
+    # nvblox default output is Volatile, so
+    # conversion via static_transform_publisher or topic_tools is required

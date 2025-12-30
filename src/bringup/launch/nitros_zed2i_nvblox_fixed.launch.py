@@ -2,43 +2,43 @@
 """
 ZED2i Isaac ROS nvblox + All Devices Integration Launch File (Complete System)
 
-このlaunchファイルは、完全なロボットシステムを起動します：
-- ZED2iカメラ（Visual SLAM、人体骨格検出）
-- ZED ZUPT Filter（オドメトリ暴走防止）
-- NVIDIA Isaac ROS nvblox（3Dマッピング、拡張範囲設定）
-- ZED Goal Publisher（ジェスチャー制御）
-- LiDAR前後（スキャンマージ、フィルタリング）
-- PS5コントローラー（テレオペレーション）
-- micro-ROS Agent（マイコン通信）
-- Safety Sensor（安全監視）
+This launch file starts the complete robot system:
+- ZED2i camera (Visual SLAM, human skeleton detection)
+- ZED ZUPT Filter (odometry drift prevention)
+- NVIDIA Isaac ROS nvblox (3D mapping, extended range configuration)
+- ZED Goal Publisher (gesture control)
+- Front/Back LiDAR (scan merge, filtering)
+- PS5 controller (teleoperation)
+- micro-ROS Agent (microcontroller communication)
+- Safety Sensor (safety monitoring)
 
-起動されるノード:
+Launched Nodes:
   1. Component Container & Robot State Publisher
-  2. ZED2iカメラノード（Composable）
-  3. LiDAR前後 + Laser Merger + Laser Filter
-  4. micro-ROS Agent（メカナムホイール制御）
-  5. PS5コントローラー + Joy Mecanum Controller
+  2. ZED2i camera node (Composable)
+  3. Front/Back LiDAR + Laser Merger + Laser Filter
+  4. micro-ROS Agent (mecanum wheel control)
+  5. PS5 controller + Joy Mecanum Controller
   6. Safety Sensor
-  7. Static TF Publishers（base_link, LiDAR配置）
-  8. ZED ZUPT Filter（オドメトリ安定化）
-  9. nvbloxノード（拡張範囲14m）
-  10. ZED Goal Publisherノード
-  11. RViz2（オプション）
+  7. Static TF Publishers (base_link, LiDAR placement)
+  8. ZED ZUPT Filter (odometry stabilization)
+  9. nvblox node (extended range 14m)
+  10. ZED Goal Publisher node
+  11. RViz2 (optional)
 
-使用方法:
-  # NITROS有効（デフォルト、推奨）
+Usage:
+  # NITROS enabled (default, recommended)
   ros2 launch bringup nitros_zed2i_nvblox_fixed.launch.py
 
-  # IPC有効（NITROS無効、従来方式）
+  # IPC enabled (NITROS disabled, legacy mode)
   ros2 launch bringup nitros_zed2i_nvblox_fixed.launch.py enable_ipc:=true
 
-オプション:
+Options:
   ros2 launch bringup nitros_zed2i_nvblox_fixed.launch.py enable_visualization:=true
 
-注意:
-  - デフォルトでNITROS有効（enable_ipc:=false）
-  - enable_ipc:=false でNITROS有効化（Isaac ROS高速通信、GPU Direct、省略可）
-  - enable_ipc:=true で従来のIPC通信（互換性優先）
+Notes:
+  - NITROS enabled by default (enable_ipc:=false)
+  - enable_ipc:=false enables NITROS (Isaac ROS high-speed communication, GPU Direct, can be omitted)
+  - enable_ipc:=true enables legacy IPC communication (compatibility priority)
 """
 
 import os
@@ -264,9 +264,9 @@ def launch_setup(context, *args, **kwargs):
 
     # 4-8. Static TF Publishers
 
-    # map to odom (静的TF、ドリフト補正なし)
-    # nvbloxはmapフレームでマップを配信、ZED2iはodomからのTFを配信
-    # 2025-10-26確定版: map_frameは'odom'を使用（ROS2標準命名）
+    # map to odom (static TF, no drift correction)
+    # nvblox publishes map in map frame, ZED2i publishes TF from odom
+    # 2025-10-26 finalized version: map_frame uses 'odom' (ROS2 standard naming)
     tf_map_to_odom = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -361,10 +361,10 @@ def launch_setup(context, *args, **kwargs):
         ('camera_0/color/image', f'/{zed_namespace}/zed_node/rgb/image_rect_color'),
         ('camera_0/color/camera_info', f'/{zed_namespace}/zed_node/rgb/camera_info'),
         ('pose', f'/{zed_namespace}/zed_node/pose'),
-        # Occupancy Grid を /map にリマップ（Nav2互換）
-        # 2025-10-21修正: static_occupancy_layer → static_occupancy_grid（正しいトピック名）
+        # Remap Occupancy Grid to /map (Nav2 compatible)
+        # 2025-10-21 fix: static_occupancy_layer → static_occupancy_grid (correct topic name)
         ('static_occupancy_grid', '/map'),
-        # LiDARスキャンのリマップ（2025-10-21追加: フィルタ済みスキャンをnvbloxに統合）
+        # LiDAR scan remapping (2025-10-21 addition: integrate filtered scan to nvblox)
         ('lidar_0/scan', '/scan_filtered'),
     ]
 
@@ -375,8 +375,8 @@ def launch_setup(context, *args, **kwargs):
         nvblox_nav2_config,      # Nav2 integration settings (map frame & occupancy grid)
         {
             'num_cameras': 1,
-            'use_lidar': True,  # LiDAR統合を有効化（2025-10-21: False→True）
-            'global_frame': 'map',  # Nav2がmapフレームを期待
+            'use_lidar': True,  # Enable LiDAR integration (2025-10-21: False→True)
+            'global_frame': 'map',  # Nav2 expects map frame
         }
     ]
 
@@ -431,11 +431,11 @@ def launch_setup(context, *args, **kwargs):
     # 8. Map→Odom TF Publisher (Disabled - ZED2i handles this)
     # ========================================
 
-    # 2025-10-26修正: map→zed_odom TFはZED2iが直接配信するため、このノードは不要
-    # ZED2i設定: publish_map_tf: true, map_frame: 'map', odometry_frame: 'zed_odom'
-    # TFツリー: map -> zed_odom -> zed_camera_origin -> zed_camera_link
+    # 2025-10-26 fix: map→zed_odom TF is published directly by ZED2i, this node is not needed
+    # ZED2i settings: publish_map_tf: true, map_frame: 'map', odometry_frame: 'zed_odom'
+    # TF tree: map -> zed_odom -> zed_camera_origin -> zed_camera_link
     #
-    # map_odom_tf_publisherノードは削除されました
+    # map_odom_tf_publisher node has been removed
 
     # ========================================
     # 9. RViz2 (Optional)

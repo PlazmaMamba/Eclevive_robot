@@ -9,14 +9,14 @@ class OdomPublisher : public rclcpp::Node
 public:
     OdomPublisher() : Node("odom_publisher")
     {
-        // TF2バッファとリスナーの初期化
+        // Initialize TF2 buffer and listener
         tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
         tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-        // Odometryパブリッシャーの作成
+        // Create Odometry publisher
         odom_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 1);
 
-        // タイマーの作成（10Hzで実行）
+        // Create timer (runs at 10Hz)
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(50),
             std::bind(&OdomPublisher::timer_callback, this));
@@ -28,16 +28,16 @@ private:
     void timer_callback()
     {
         try {
-            // odomフレームからzed_camera_linkフレームへの変換を取得
-            geometry_msgs::msg::TransformStamped transform_stamped = 
+            // Get transform from odom frame to zed_camera_link frame
+            geometry_msgs::msg::TransformStamped transform_stamped =
                 tf_buffer_->lookupTransform("odom", "zed_camera_link", tf2::TimePointZero);
 
-            // Odometryメッセージの作成
+            // Create Odometry message
             nav_msgs::msg::Odometry odom_msg;
             odom_msg.header = transform_stamped.header;
             odom_msg.child_frame_id = transform_stamped.child_frame_id;
 
-            // Pose情報の設定
+            // Set Pose information
             odom_msg.pose.pose.position.x = transform_stamped.transform.translation.x;
             odom_msg.pose.pose.position.y = transform_stamped.transform.translation.y;
             odom_msg.pose.pose.position.z = transform_stamped.transform.translation.z;
@@ -47,27 +47,27 @@ private:
             odom_msg.pose.pose.orientation.z = transform_stamped.transform.rotation.z;
             odom_msg.pose.pose.orientation.w = transform_stamped.transform.rotation.w;
 
-            // Twist情報の計算（前回の位置との差分から速度を計算）
+            // Calculate Twist information (calculate velocity from difference with previous position)
             if (last_transform_) {
                 double dt = (transform_stamped.header.stamp.sec - last_transform_->header.stamp.sec) +
                            (transform_stamped.header.stamp.nanosec - last_transform_->header.stamp.nanosec) * 1e-9;
-                
+
                 if (dt > 0) {
-                    odom_msg.twist.twist.linear.x = 
+                    odom_msg.twist.twist.linear.x =
                         (transform_stamped.transform.translation.x - last_transform_->transform.translation.x) / dt;
-                    odom_msg.twist.twist.linear.y = 
+                    odom_msg.twist.twist.linear.y =
                         (transform_stamped.transform.translation.y - last_transform_->transform.translation.y) / dt;
-                    odom_msg.twist.twist.linear.z = 
+                    odom_msg.twist.twist.linear.z =
                         (transform_stamped.transform.translation.z - last_transform_->transform.translation.z) / dt;
-                    
-                    // 角速度の計算は簡略化のため省略しています
+
+                    // Angular velocity calculation is omitted for simplification
                 }
             }
 
-            // 現在の変換を保存
+            // Store current transform
             last_transform_ = std::make_unique<geometry_msgs::msg::TransformStamped>(transform_stamped);
 
-            // Odometryメッセージのパブリッシュ
+            // Publish Odometry message
             odom_publisher_->publish(odom_msg);
         }
         catch (const tf2::TransformException& ex) {

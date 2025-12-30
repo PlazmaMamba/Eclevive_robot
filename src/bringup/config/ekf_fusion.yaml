@@ -1,26 +1,26 @@
 ekf_filter_node:
   ros__parameters:
-    # 基本設定
+    # Basic settings
     frequency: 20.0
     sensor_timeout: 0.1
-    two_d_mode: true #false  # 3Dモードに変更
+    two_d_mode: true #false  # Change to 3D mode
     transform_time_offset: 0.0
     transform_timeout: 0.0
-    
-    # オドメトリ0: RF2O Laser Odometry
+
+    # Odometry 0: RF2O Laser Odometry
     odom0: /laser_odom
     odom0_config: [true,  true,  true,
                    false, false, true]
     odom0_differential: false
     odom0_relative: false
-    
-    # オドメトリ1: ZED2 Odometry
+
+    # Odometry 1: ZED2 Odometry
     odom1: /zed/zed_node/odom
     odom1_config: [true,  true,  true,
                    false, false, true]
     odom1_differential: false
     odom1_relative: false
-    
+
     # IMU: ZED2 IMU
     imu0: /zed/zed_node/imu/data
     imu0_config: [false, false, false,
@@ -28,14 +28,14 @@ ekf_filter_node:
     imu0_differential: false
     imu0_relative: false
     imu0_remove_gravitational_acceleration: true
-    
-    # フレーム設定
+
+    # Frame settings
     world_frame: fusion_odom
     map_frame: map
     odom_frame: fusion_odom
     base_link_frame: base_link
-    
-    # プロセスノイズの設定
+
+    # Process noise covariance settings
     process_noise_covariance: [1e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                 0.0, 1e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0, 1e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,

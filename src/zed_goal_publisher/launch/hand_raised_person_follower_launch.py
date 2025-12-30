@@ -3,29 +3,29 @@
 """
 Hand Raised Person Follower Launch File
 
-このlaunchファイルは手を上げた人を追従するノードを起動します。
+This launch file starts the node that follows a person with raised hand.
 
-起動方法:
+Usage:
   ros2 launch zed_goal_publisher hand_raised_person_follower_launch.py
 
-動作:
-  1. ZED2iの骨格検出から複数人を認識
-  2. 肩より上に手を上げている人を検出
-  3. 検出した人の追跡ID（label_id）を記録
-  4. その人だけを継続的に追従（距離と角度を維持）
-  5. 追従対象のTFフレーム（target_person）を配信
+Operation:
+  1. Recognize multiple people from ZED2i skeleton detection
+  2. Detect person with hand raised above shoulder
+  3. Record the detected person's tracking ID (label_id)
+  4. Continuously follow only that person (maintaining distance and angle)
+  5. Publish TF frame (target_person) for the tracking target
 
-確認方法:
-  # 追跡状態の確認
+Verification:
+  # Check tracking status
   ros2 topic echo /hand_follower/status
 
-  # ターゲットIDの確認
+  # Check target ID
   ros2 topic echo /hand_follower/target_id
 
-  # 速度指令の確認
+  # Check velocity command
   ros2 topic echo /cmd_vel
 
-  # TFツリーの確認
+  # Check TF tree
   ros2 run tf2_tools view_frames
 """
 
@@ -35,62 +35,62 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
-    # Launch引数の宣言
+    # Declare launch arguments
     skeleton_topic_arg = DeclareLaunchArgument(
         'skeleton_topic',
         default_value='zed/zed_node/body_trk/skeletons',
-        description='ZED骨格検出トピック名'
+        description='ZED skeleton detection topic name'
     )
 
     cmd_vel_topic_arg = DeclareLaunchArgument(
         'cmd_vel_topic',
         default_value='cmd_vel',
-        description='速度指令トピック名'
+        description='Velocity command topic name'
     )
 
     target_distance_arg = DeclareLaunchArgument(
         'target_distance',
         default_value='1.5',
-        description='目標追従距離 [m]'
+        description='Target following distance [m]'
     )
 
     distance_tolerance_arg = DeclareLaunchArgument(
         'distance_tolerance',
         default_value='0.4',
-        description='距離許容誤差 [m]'
+        description='Distance tolerance error [m]'
     )
 
     angle_tolerance_arg = DeclareLaunchArgument(
         'angle_tolerance',
         default_value='0.1',
-        description='角度許容誤差 [rad]'
+        description='Angle tolerance error [rad]'
     )
 
     max_linear_speed_arg = DeclareLaunchArgument(
         'max_linear_speed',
         default_value='0.50',
-        description='最大前後速度 [m/s]'
+        description='Maximum linear speed [m/s]'
     )
 
     max_angular_speed_arg = DeclareLaunchArgument(
         'max_angular_speed',
         default_value='1.2',
-        description='最大角速度 [rad/s]'
+        description='Maximum angular speed [rad/s]'
     )
 
     hand_raise_threshold_arg = DeclareLaunchArgument(
         'hand_raise_threshold',
         default_value='0.3',
-        description='手上げ判定閾値 [m] (肩と手の高低差)'
+        description='Hand raise detection threshold [m] (shoulder-hand height difference)'
     )
 
     tracking_timeout_arg = DeclareLaunchArgument(
         'tracking_timeout',
         default_value='4.0',
-        description='追跡タイムアウト [s]'
+        description='Tracking timeout [s]'
     )
 
-    # ノード定義
+    # Node definition
     hand_raised_person_follower_node = Node(
         package='zed_goal_publisher',
         executable='hand_raised_person_follower',
@@ -108,12 +108,12 @@ def generate_launch_description():
             'tracking_timeout': LaunchConfiguration('tracking_timeout'),
         }],
         remappings=[
-            # 必要に応じてリマッピング追加
+            # Add remappings as needed
         ]
     )
 
     return LaunchDescription([
-        # Launch引数
+        # Launch arguments
         skeleton_topic_arg,
         cmd_vel_topic_arg,
         target_distance_arg,
@@ -124,6 +124,6 @@ def generate_launch_description():
         hand_raise_threshold_arg,
         tracking_timeout_arg,
 
-        # ノード
+        # Node
         hand_raised_person_follower_node,
     ])

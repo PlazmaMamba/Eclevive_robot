@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """
-ZED2i + nvblox + Nav2 統合起動ファイル
+ZED2i + nvblox + Nav2 Integrated Launch File
 
-このlaunchファイルは、完全な自律ナビゲーションシステムを起動します：
-- ZED2iカメラ（Visual SLAM、人体骨格検出）
-- NVIDIA Isaac ROS nvblox（3Dマッピング、拡張範囲14m）
-- Navigation2スタック（自律ナビゲーション）
-- LiDAR前後（障害物検出）
-- PS5コントローラー（テレオペレーション）
-- すべてのデバイス・センサー
+This launch file starts a complete autonomous navigation system:
+- ZED2i camera (Visual SLAM, human skeleton detection)
+- NVIDIA Isaac ROS nvblox (3D mapping, extended range 14m)
+- Navigation2 stack (autonomous navigation)
+- Front/Back LiDAR (obstacle detection)
+- PS5 controller (teleoperation)
+- All devices and sensors
 
-使用方法:
+Usage:
   ros2 launch bringup zed2i_nvblox_nav2_launch.py
 
-注意:
-  - AMCLは使用しません（nvbloxが map -> zed_odom TFを提供）
-  - 自己位置推定はZED Visual Odometry + nvbloxで実現
-  - コストマップはnvbloxのESDF点群とLiDARスキャンから生成
+Notes:
+  - AMCL is not used (nvblox provides map -> zed_odom TF)
+  - Localization realized by ZED Visual Odometry + nvblox
+  - Costmap generated from nvblox ESDF pointcloud and LiDAR scans
 """
 
 import os
@@ -51,7 +51,7 @@ def generate_launch_description():
     # ========================================
     # 1. ZED2i + nvblox + All Devices Launch
     # ========================================
-    # すべてのセンサー、nvblox、デバイスを起動
+    # Launch all sensors, nvblox, and devices
     zed_nvblox_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(bringup_dir, 'launch', 'zed2i_nvblox_fixed.launch.py')
@@ -64,10 +64,10 @@ def generate_launch_description():
     # ========================================
     # 2. Navigation2 Launch (without AMCL and Map Server)
     # ========================================
-    # Nav2スタックを起動（AMCLとMap Serverは除外）
-    # nvbloxが map -> zed_odom TFを提供するため、AMCLは不要
+    # Launch Nav2 stack (excluding AMCL and Map Server)
+    # AMCL is not needed because nvblox provides map -> zed_odom TF
     nav2_launch = TimerAction(
-        period=8.0,  # ZEDとnvbloxが完全に起動するまで待機
+        period=8.0,  # Wait until ZED and nvblox are fully started
         actions=[
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -87,9 +87,9 @@ def generate_launch_description():
     # ========================================
     startup_log = LogInfo(msg=TextSubstitution(text=
         '\n========================================\n'
-        'ZED2i + nvblox + Nav2 統合システム起動\n'
+        'ZED2i + nvblox + Nav2 Integrated System Launch\n'
         '========================================\n'
-        '\n起動コンポーネント:\n'
+        '\nLaunching Components:\n'
         '  ✓ ZED2i Camera (Visual Odometry + Body Tracking)\n'
         '  ✓ ZED ZUPT Filter (Odometry Stabilization)\n'
         '  ✓ nvblox (3D Mapping, Extended Range: 14m)\n'
@@ -98,27 +98,27 @@ def generate_launch_description():
         '  ✓ micro-ROS Agent\n'
         '  ✓ ZED Goal Publisher\n'
         '  ✓ Safety Sensor\n'
-        '  ✓ Navigation2 Stack (自律ナビゲーション)\n'
-        '    - Collision Monitor (障害物回避強化)\n'
-        '      - Stop Zone: 0.25m (緊急停止)\n'
-        '      - Slowdown Zone: 0.45m (40%減速)\n'
-        '      - Approach Zone: 1.5秒先予測\n'
-        '\n座標系構成:\n'
+        '  ✓ Navigation2 Stack (Autonomous Navigation)\n'
+        '    - Collision Monitor (Enhanced Obstacle Avoidance)\n'
+        '      - Stop Zone: 0.25m (Emergency Stop)\n'
+        '      - Slowdown Zone: 0.45m (40% Deceleration)\n'
+        '      - Approach Zone: 1.5s Forward Prediction\n'
+        '\nCoordinate Frame Structure:\n'
         '  map (nvblox global_frame)\n'
-        '    └─ odom (ZED2i map_frame - Visual SLAM親フレーム)\n'
+        '    └─ odom (ZED2i map_frame - Visual SLAM parent frame)\n'
         '        └─ zed_camera_origin (ZED2i odometry_frame)\n'
-        '            └─ zed_camera_link (ロボット基準)\n'
+        '            └─ zed_camera_link (Robot reference)\n'
         '                ├─ base_link\n'
         '                ├─ front_lidar\n'
         '                └─ back_lidar\n'
-        '\n自己位置推定:\n'
-        '  - AMCLは使用しません\n'
-        '  - ZED Visual Odometryで高精度な位置推定\n'
-        '  - ZED2i設定: map_frame: odom, odometry_frame: zed_camera_origin\n'
-        '  - map → odom: static_transform_publisher（固定、0 0 0）\n'
-        '\nコストマップソース:\n'
-        '  - Global: nvblox ESDF点群 + LiDARスキャン\n'
-        '  - Local: ZEDポイントクラウド + LiDARスキャン\n'
+        '\nLocalization:\n'
+        '  - AMCL is not used\n'
+        '  - High-precision pose estimation with ZED Visual Odometry\n'
+        '  - ZED2i settings: map_frame: odom, odometry_frame: zed_camera_origin\n'
+        '  - map → odom: static_transform_publisher (fixed, 0 0 0)\n'
+        '\nCostmap Sources:\n'
+        '  - Global: nvblox ESDF pointcloud + LiDAR scan\n'
+        '  - Local: ZED pointcloud + LiDAR scan\n'
         '========================================\n'
     ))
 
@@ -126,34 +126,34 @@ def generate_launch_description():
         period=10.0,
         actions=[LogInfo(msg=TextSubstitution(text=
             '\n========================================\n'
-            'システム起動完了！\n'
+            'System Launch Complete!\n'
             '========================================\n'
-            '\n確認コマンド:\n'
-            '  # TF確認\n'
+            '\nVerification Commands:\n'
+            '  # Check TF\n'
             '  ros2 run tf2_tools view_frames\n'
             '  ros2 run tf2_ros tf2_echo map zed_camera_link\n'
-            '\n  # トピック確認\n'
+            '\n  # Check topics\n'
             '  ros2 topic hz /nvblox_node/esdf_pointcloud\n'
             '  ros2 topic hz /merged_scan_filtered\n'
             '  ros2 topic hz /cmd_vel\n'
-            '\n  # ノード確認\n'
+            '\n  # Check nodes\n'
             '  ros2 node list | grep -E "nvblox|controller|planner|collision"\n'
-            '\n  # コストマップ確認\n'
+            '\n  # Check costmaps\n'
             '  ros2 topic echo /global_costmap/costmap --once\n'
             '  ros2 topic echo /local_costmap/costmap --once\n'
-            '\n  # Collision Monitor確認\n'
+            '\n  # Check Collision Monitor\n'
             '  ros2 topic hz /cmd_vel_monitored\n'
             '  ros2 topic echo /polygon_stop\n'
             '  ros2 topic echo /polygon_slowdown\n'
-            '\nナビゲーション開始方法:\n'
-            '  1. RViz2でゴールを設定\n'
-            '  2. または、ZED Goal Publisherでジェスチャー指示\n'
-            '  3. または、/goal_poseトピックに直接publish\n'
-            '\n障害物回避:\n'
-            '  - Collision Monitorが自動的に障害物を検出\n'
-            '  - 0.25m以内: 緊急停止\n'
-            '  - 0.45m以内: 40%減速\n'
-            '  - 1.5秒先: 動的予測回避\n'
+            '\nHow to Start Navigation:\n'
+            '  1. Set goal in RViz2\n'
+            '  2. Or use ZED Goal Publisher with gesture commands\n'
+            '  3. Or publish directly to /goal_pose topic\n'
+            '\nObstacle Avoidance:\n'
+            '  - Collision Monitor automatically detects obstacles\n'
+            '  - Within 0.25m: Emergency stop\n'
+            '  - Within 0.45m: 40% deceleration\n'
+            '  - 1.5s ahead: Dynamic predictive avoidance\n'
             '========================================\n'
         ))]
     )
