@@ -1,33 +1,33 @@
-# Eclevive Robot - ZED2i + nvblox + Nav2 自律ナビゲーションシステム
+# Eclevive Robot - ZED2i + nvblox + Nav2 Autonomous Navigation System
 
-メカナムホイールとロボットアームを搭載したロボット。ROS2 Humbleベースの完全自律ナビゲーションシステム。NVIDIA Isaac ROS nvbloxによる3Dマッピング、ZED2i Visual SLAM、Nav2経路計画を統合しています。
+A robot equipped with mecanum wheels and a robot arm. A complete autonomous navigation system based on ROS2 Humble. Integrates 3D mapping with NVIDIA Isaac ROS nvblox, ZED2i Visual SLAM, and Nav2 path planning.
 
-## システム概要
+## System Overview
 
-- **プラットフォーム**: Jetson Orin Nano / AGX Orin
-- **ROS2バージョン**: Humble
-- **ロボットタイプ**: メカナムホイール移動ロボット
-- **主要センサー**: ZED2i、LiDAR x2、IMU
-- **制御方式**: PS5コントローラー + 自律ナビゲーション
+- **Platform**: Jetson Orin Nano / AGX Orin
+- **ROS2 Version**: Humble
+- **Robot Type**: Mecanum wheel mobile robot
+- **Primary Sensors**: ZED2i, LiDAR x2, IMU
+- **Control Method**: PS5 controller + autonomous navigation
 
-## 主要機能
+## Key Features
 
-1. **3Dマッピング**: NVIDIA Isaac ROS nvblox（ESDF、拡張範囲14m）
-2. **自己位置推定**: ZED2i Visual SLAM（AMCLなし）
-3. **経路計画**: Navigation2（Theta* Planner + MPPI Controller）
-4. **障害物回避**: LiDAR + ZED Depth融合コストマップ
-5. **人体認識**: ZED Body Tracking + ジェスチャー制御
+1. **3D Mapping**: NVIDIA Isaac ROS nvblox (ESDF, extended range 14m)
+2. **Localization**: ZED2i Visual SLAM (without AMCL)
+3. **Path Planning**: Navigation2 (Theta* Planner + MPPI Controller)
+4. **Obstacle Avoidance**: LiDAR + ZED Depth fusion costmap
+5. **Human Recognition**: ZED Body Tracking + gesture control
 
-## クイックスタート
+## Quick Start
 
-### 1. 依存パッケージのインストール
+### 1. Install Dependencies
 
 ```bash
 cd ~/ros2_ws
 ./setup_dependencies.sh
 ```
 
-### 2. ビルド
+### 2. Build
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -38,129 +38,129 @@ colcon build --packages-skip-build-finished --symlink-install \
                   isaac_ros_nova_recorder
 ```
 
-### 3. 起動
+### 3. Launch
 
 ```bash
 source install/setup.bash
 ros2 launch bringup zed2i_nvblox_nav2_launch.py
 ```
 
-## パッケージ構成
+## Package Structure
 
-### 自作パッケージ（このリポジトリに含まれる）
+### Custom Packages (included in this repository)
 
-| パッケージ | 説明 |
-|-----------|------|
-| `bringup` | 統合launchファイル、設定ファイル |
-| `mark3_urdf` | ロボットURDF定義 |
-| `joy_mecanum_controller` | PS5コントローラー操作 |
-| `zed_goal_publisher` | ZEDジェスチャーによるゴール設定 |
-| `zed_human_tracker` | 人体追従機能 |
-| `zed_zupt_wrapper` | ZED ZUPT（Zero Velocity Update）フィルタ |
-| `safety_sensor` | 安全センサー統合 |
-| `cmd_vel_float_changer` | 速度指令変換 |
-| `odom_publisher` | オドメトリ配信 |
-| `zed_gesture_controller` | ジェスチャー制御 |
-| `zed_imu_republisher` | IMUデータ再配信 |
-| `zed_odom_watcher` | オドメトリ監視 |
+| Package | Description |
+|---------|-------------|
+| `bringup` | Integrated launch files, configuration files |
+| `mark3_urdf` | Robot URDF definition |
+| `joy_mecanum_controller` | PS5 controller operation |
+| `zed_goal_publisher` | Goal setting via ZED gestures |
+| `zed_human_tracker` | Human following function |
+| `zed_zupt_wrapper` | ZED ZUPT (Zero Velocity Update) filter |
+| `safety_sensor` | Safety sensor integration |
+| `cmd_vel_float_changer` | Velocity command conversion |
+| `odom_publisher` | Odometry publisher |
+| `zed_gesture_controller` | Gesture control |
+| `zed_imu_republisher` | IMU data republisher |
+| `zed_odom_watcher` | Odometry monitoring |
 
-### 外部依存パッケージ（別途インストール）
+### External Dependencies (install separately)
 
-- **NVIDIA Isaac ROS**: nvblox、Visual SLAM、Image Pipeline
-- **Navigation2**: 経路計画、自律ナビゲーション
-- **ZED SDK**: ZED2iカメラドライバ
-- **LiDAR**: ldlidar_stl_ros2、sllidar_ros2
-- **その他**: slam_toolbox、laser_filters、pointcloud_to_laserscan
+- **NVIDIA Isaac ROS**: nvblox, Visual SLAM, Image Pipeline
+- **Navigation2**: Path planning, autonomous navigation
+- **ZED SDK**: ZED2i camera driver
+- **LiDAR**: ldlidar_stl_ros2, sllidar_ros2
+- **Others**: slam_toolbox, laser_filters, pointcloud_to_laserscan
 
-詳細は[setup_dependencies.sh](setup_dependencies.sh)を参照。
+See [setup_dependencies.sh](setup_dependencies.sh) for details.
 
-## システムアーキテクチャ
+## System Architecture
 
-### TFツリー構造
+### TF Tree Structure
 
 ```
 map (nvblox global_frame)
- └─ odom (ZED2i map_frame - Visual SLAM親フレーム)
+ └─ odom (ZED2i map_frame - Visual SLAM parent frame)
      └─ zed_camera_origin (ZED2i odometry_frame)
-         └─ zed_camera_link (ロボット基準点)
+         └─ zed_camera_link (robot reference point)
              ├─ base_link
              ├─ front_lidar
              └─ back_lidar
 ```
 
-**重要**: ZED2iの`map_frame='odom'`設定は**絶対に変更禁止**。この設定はVisual OdometryとnvbloxのOccupancy Grid配信の両立に必須です。
+**Important**: The ZED2i `map_frame='odom'` setting is **absolutely prohibited from being changed**. This setting is essential for both Visual Odometry and nvblox Occupancy Grid publishing to work together.
 
-### 主要トピック
+### Key Topics
 
-- LiDAR: `/scan_filtered` (マージ済み)
+- LiDAR: `/scan_filtered` (merged)
 - Costmap: `/local_costmap/costmap_raw`, `/global_costmap/costmap_raw`
-- オドメトリ: `/zed/zed_node/odom`
-- ナビゲーション: `/goal_pose`, `/cmd_vel`
+- Odometry: `/zed/zed_node/odom`
+- Navigation: `/goal_pose`, `/cmd_vel`
 
-詳細は[CLAUDE.md](CLAUDE.md)を参照。
+See [CLAUDE.md](CLAUDE.md) for details.
 
-## パフォーマンス最適化
+## Performance Optimization
 
-### Local Costmap最適化（2025-11-03）
+### Local Costmap Optimization (2025-11-03)
 
-- **更新周波数**: 25Hz → 30Hz（実測11.8Hz）
-- **解像度**: 0.04m → 0.03m（高精細化）
-- **障害物検出範囲**: 1.8m → 2.5m（+39%）
-- **LiDARレイヤー**: VoxelLayer → ObstacleLayer（軽量化）
+- **Update Frequency**: 25Hz → 30Hz (measured 11.8Hz)
+- **Resolution**: 0.04m → 0.03m (higher resolution)
+- **Obstacle Detection Range**: 1.8m → 2.5m (+39%)
+- **LiDAR Layer**: VoxelLayer → ObstacleLayer (lighter weight)
 
-結果: 障害物検出精度が77%向上、CPU負荷は適正範囲内（52% idle）
+Result: Obstacle detection accuracy improved by 77%, CPU load within acceptable range (52% idle)
 
-## トラブルシューティング
+## Troubleshooting
 
-### LiDAR物理的取り付けの確認
+### Check LiDAR Physical Mounting
 
-**症状**: SLAMで地図がうまく生成できない
-**原因**: LiDARが下向きに傾いている
-**対処**: LiDARの取り付け角度を物理的に調整し、水平にする
+**Symptom**: Unable to generate map properly with SLAM
+**Cause**: LiDAR is tilted downward
+**Solution**: Physically adjust LiDAR mounting angle to be horizontal
 
-### TF設定の確認
-
-```bash
-ros2 param get /zed/zed_node pos_tracking.publish_map_tf  # 期待値: true
-ros2 param get /zed/zed_node pos_tracking.map_frame       # 期待値: odom
-```
-
-詳細は[docs/troubleshooting.md](.claude/docs/troubleshooting.md)を参照。
-
-## ドキュメント
-
-- **[CLAUDE.md](CLAUDE.md)**: 基本設定と概要
-- **[system-architecture.md](.claude/docs/system-architecture.md)**: システムアーキテクチャ詳細
-- **[tf-tree.md](.claude/docs/tf-tree.md)**: TFツリー仕様
-- **[topics.md](.claude/docs/topics.md)**: トピック仕様
-- **[build-system.md](.claude/docs/build-system.md)**: ビルドシステム
-- **[troubleshooting.md](.claude/docs/troubleshooting.md)**: トラブルシューティング
-
-## スラッシュコマンド
+### Check TF Configuration
 
 ```bash
-/ros2-diagnose     # システム診断を実行
-/ros2-build        # パッケージビルドを実行
-/ros2-test-nav     # ナビゲーションテストを実行
+ros2 param get /zed/zed_node pos_tracking.publish_map_tf  # Expected: true
+ros2 param get /zed/zed_node pos_tracking.map_frame       # Expected: odom
 ```
 
-## ライセンス
+See [docs/troubleshooting.md](.claude/docs/troubleshooting.md) for details.
 
-自作パッケージ: MIT License
+## Documentation
 
-外部パッケージはそれぞれのライセンスに従います：
+- **[CLAUDE.md](CLAUDE.md)**: Basic configuration and overview
+- **[system-architecture.md](.claude/docs/system-architecture.md)**: System architecture details
+- **[tf-tree.md](.claude/docs/tf-tree.md)**: TF tree specification
+- **[topics.md](.claude/docs/topics.md)**: Topic specification
+- **[build-system.md](.claude/docs/build-system.md)**: Build system
+- **[troubleshooting.md](.claude/docs/troubleshooting.md)**: Troubleshooting
+
+## Slash Commands
+
+```bash
+/ros2-diagnose     # Run system diagnostics
+/ros2-build        # Build packages
+/ros2-test-nav     # Run navigation tests
+```
+
+## License
+
+Custom packages: MIT License
+
+External packages follow their respective licenses:
 - NVIDIA Isaac ROS: Apache-2.0
 - Navigation2: Apache-2.0
 - ZED SDK: Stereolabs License
 
-## 作成者
+## Author
 
-- GitHub: [あなたのGitHubアカウント]
-- 開発環境: Jetson Orin Nano/AGX Orin + ROS2 Humble
+- GitHub: [Your GitHub Account]
+- Development Environment: Jetson Orin Nano/AGX Orin + ROS2 Humble
 
-## 謝辞
+## Acknowledgments
 
-このプロジェクトは以下のオープンソースプロジェクトを使用しています：
+This project uses the following open source projects:
 - [NVIDIA Isaac ROS](https://github.com/NVIDIA-ISAAC-ROS)
 - [Navigation2](https://github.com/ros-planning/navigation2)
 - [ZED ROS2 Wrapper](https://github.com/stereolabs/zed-ros2-wrapper)

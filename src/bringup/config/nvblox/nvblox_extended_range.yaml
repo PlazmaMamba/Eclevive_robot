@@ -1,61 +1,61 @@
 /**:
   ros__parameters:
     # ========================================
-    # 拡張範囲設定（2倍の範囲: 7m → 14m）
+    # Extended range settings (double range: 7m → 14m)
     # ========================================
 
-    # マップクリア範囲を2倍に拡大（7m → 14m）
-    # ロボットから14m以内のマップを保持
+    # Expand map clearing range to double (7m → 14m)
+    # Retain map within 14m of robot
     map_clearing_radius_m: 14.0
 
-    # 可視化範囲を2倍に拡大
+    # Expand visualization range to double
     max_back_projection_distance: 14.0
     layer_visualization_exclusion_radius_m: 14.0
     esdf_slice_bounds_visualization_side_length: 20.0
     workspace_height_bounds_visualization_side_length: 20.0
 
-    # ESDF（距離場）計算範囲を拡大
+    # Expand ESDF (distance field) calculation range
     static_mapper:
-      # 統合距離を2倍に拡大（5m → 10m）
+      # Expand integration distance to double (5m → 10m)
       projective_integrator_max_integration_distance_m: 10.0
 
-      # ESDF最大距離を拡大（2m → 4m）
+      # Expand ESDF maximum distance (2m → 4m)
       esdf_integrator_max_distance_m: 4.0
       esdf_integrator_max_site_distance_vox: 4.0
 
-      # メッシュストリーマーの除外半径を拡大
+      # Expand mesh streamer exclusion radius
       layer_streamer_exclusion_radius_m: 14.0
 
     # ========================================
-    # 点群保持期間の延長（元の6倍に延長 - メモリ余裕あり: 6.8G/15.3G）
+    # Extend point cloud retention period (6x extension - memory available: 6.8G/15.3G)
     # ========================================
 
-    # TSDF減衰を遅くして、古いデータを長く保持
+    # Slow down TSDF decay to retain old data longer
     static_mapper:
-      # 減衰係数を上げる（0.95 → 0.98 → 0.993 → 0.9965）
-      # 高いほど長く保持される（6倍遅い減衰）
-      # 理論保持期間: 約60分
+      # Increase decay factor (0.95 → 0.98 → 0.993 → 0.9965)
+      # Higher value retains longer (6x slower decay)
+      # Theoretical retention period: approximately 60 minutes
       tsdf_decay_factor: 0.9965
 
-      # 減衰閾値を下げる（0.001 → 0.0005 → 0.00015 → 0.00005）
-      # 低いほど長く保持される（約6倍遅いクリア）
+      # Lower decay threshold (0.001 → 0.0005 → 0.00015 → 0.00005)
+      # Lower value retains longer (approximately 6x slower clearing)
       tsdf_decayed_weight_threshold: 0.00005
 
-    # 減衰レートを下げる（5Hz → 2Hz → 0.67Hz → 0.33Hz）
-    # 減衰処理の頻度を減らして長く保持（約6倍遅い更新）
-    # 約3秒に1回の減衰処理
+    # Lower decay rate (5Hz → 2Hz → 0.67Hz → 0.33Hz)
+    # Reduce decay processing frequency to retain longer (approximately 6x slower update)
+    # Decay processing approximately every 3 seconds
     decay_tsdf_rate_hz: 0.33
 
-    # マップクリア頻度を下げる（1Hz → 0.5Hz → 0.17Hz → 0.083Hz）
-    # クリア処理の頻度を減らして長く保持（約6倍遅いクリア）
-    # 約12秒に1回のクリア処理
+    # Lower map clearing frequency (1Hz → 0.5Hz → 0.17Hz → 0.083Hz)
+    # Reduce clearing processing frequency to retain longer (approximately 6x slower clearing)
+    # Clearing processing approximately every 12 seconds
     clear_map_outside_radius_rate_hz: 0.083
 
     # ========================================
-    # パフォーマンス調整
+    # Performance adjustment
     # ========================================
 
-    # より広い範囲を処理するため、統合レートを調整
+    # Adjust integration rate to process wider range
     integrate_depth_rate_hz: 30.0  # 40Hz → 30Hz
     update_esdf_rate_hz: 8.0       # 10Hz → 8Hz
     update_mesh_rate_hz: 4.0       # 5Hz → 4Hz

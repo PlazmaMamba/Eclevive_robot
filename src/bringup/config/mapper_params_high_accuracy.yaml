@@ -1,13 +1,13 @@
 slam_toolbox:
   ros__parameters:
 
-    # Plugin params - Ceres最適化設定
+    # Plugin params - Ceres optimization settings
     solver_plugin: solver_plugins::CeresSolver
     ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
     ceres_preconditioner: SCHUR_JACOBI
     ceres_trust_strategy: LEVENBERG_MARQUARDT
     ceres_dogleg_type: TRADITIONAL_DOGLEG
-    ceres_loss_function: Huber  # None→Huber: 外れ値に対してロバスト
+    ceres_loss_function: Huber  # None→Huber: Robust to outliers
 
     # ROS Parameters
     odom_frame: zed_odom
@@ -28,10 +28,10 @@ slam_toolbox:
     throttle_scans: 1
     transform_publish_period: 0.02
     map_update_interval: 0.5
-    resolution: 0.025  # 解像度を高める（0.05→0.025m）より詳細な地図
+    resolution: 0.025  # Increase resolution (0.05→0.025m) for more detailed map
     restamp_tf: true
-    min_laser_range: 0.15  # 最小距離を設定しノイズ除去（0.0→0.15m）
-    max_laser_range: 12.0  # 最大距離を制限し信頼性向上（20.0→12.0m）
+    min_laser_range: 0.15  # Set minimum distance to remove noise (0.0→0.15m)
+    max_laser_range: 12.0  # Limit maximum distance to improve reliability (20.0→12.0m)
     minimum_time_interval: 0.005
     stack_size_to_use: 40000000
     enable_interactive_mode: true
@@ -41,12 +41,12 @@ slam_toolbox:
     scan_processing_timeout: 3.0
     temporal_smoothing: true
 
-    # General Parameters - 形状精度重視
+    # General Parameters - Prioritize shape accuracy
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.01  # 1cm単位で細かく更新
-    minimum_travel_heading: 0.0087  # 0.5度単位で細かく更新
-    scan_buffer_size: 150  # バッファを大幅に増加（70→150）
+    minimum_travel_distance: 0.01  # Fine-grained updates in 1cm increments
+    minimum_travel_heading: 0.0087  # Fine-grained updates in 0.5 degree increments
+    scan_buffer_size: 150  # Significantly increase buffer (70→150)
     scan_buffer_maximum_scan_distance: 15.0
 
     # Scan Processing Optimization
@@ -90,38 +90,38 @@ slam_toolbox:
     log_sync_issues: true
     sync_warning_threshold: 0.2
 
-    # Scan Association - 形状精度向上のため厳格化
-    link_match_minimum_response_fine: 0.25  # より厳格なマッチング（0.15→0.25）
-    link_scan_maximum_distance: 0.6  # 関連付け距離を短縮（1.0→0.6）
-    loop_search_maximum_distance: 4.0  # ループ探索範囲拡大（3.0→4.0）
+    # Scan Association - Stricter for improved shape accuracy
+    link_match_minimum_response_fine: 0.25  # More strict matching (0.15→0.25)
+    link_scan_maximum_distance: 0.6  # Shorten association distance (1.0→0.6)
+    loop_search_maximum_distance: 4.0  # Expand loop search range (3.0→4.0)
     do_loop_closing: true
-    loop_match_minimum_chain_size: 15  # チェーンサイズ増加（10→15）
-    loop_match_maximum_variance_coarse: 2.0  # 分散を厳格化（3.0→2.0）
-    loop_match_minimum_response_coarse: 0.50  # ループ閉じ閾値を厳格化（0.40→0.50）
-    loop_match_minimum_response_fine: 0.60  # さらに厳格化（0.50→0.60）
+    loop_match_minimum_chain_size: 15  # Increase chain size (10→15)
+    loop_match_maximum_variance_coarse: 2.0  # Stricter variance (3.0→2.0)
+    loop_match_minimum_response_coarse: 0.50  -- Stricter loop closure threshold (0.40→0.50)
+    loop_match_minimum_response_fine: 0.60  # Even stricter (0.50→0.60)
 
-    # Correlation Parameters - 超高解像度探索
+    # Correlation Parameters - Ultra high resolution search
     correlation_search_space_dimension: 0.4
-    correlation_search_space_resolution: 0.003  # 超高解像度（0.005→0.003）
-    correlation_search_space_smear_deviation: 0.02  # スミアリング最小化（0.05→0.02）
+    correlation_search_space_resolution: 0.003  # Ultra high resolution (0.005→0.003)
+    correlation_search_space_smear_deviation: 0.02  # Minimize smearing (0.05→0.02)
 
-    # Loop Closure Parameters - ループ閉じ精度向上
-    loop_search_space_dimension: 10.0  # 探索範囲拡大（8.0→10.0）
-    loop_search_space_resolution: 0.03  # 高解像度化（0.05→0.03）
-    loop_search_space_smear_deviation: 0.02  # スミアリング削減（0.03→0.02）
+    # Loop Closure Parameters - Improved loop closure accuracy
+    loop_search_space_dimension: 10.0  # Expand search range (8.0→10.0)
+    loop_search_space_resolution: 0.03  # Higher resolution (0.05→0.03)
+    loop_search_space_smear_deviation: 0.02  # Reduce smearing (0.03→0.02)
 
-    # Scan Matcher Parameters - 形状重視のバランス調整
-    distance_variance_penalty: 0.8  # 並進精度も重視（0.5→0.8）
-    angle_variance_penalty: 2.5  # 回転精度を高く維持（2.0→2.5）
+    # Scan Matcher Parameters - Balance adjustment prioritizing shape
+    distance_variance_penalty: 0.8  # Also emphasize translation accuracy (0.5→0.8)
+    angle_variance_penalty: 2.5  # Maintain high rotation accuracy (2.0→2.5)
 
-    fine_search_angle_offset: 0.00087  # 0.05度刻みで超細密探索（0.00175→0.00087）
+    fine_search_angle_offset: 0.00087  # Ultra fine search in 0.05 degree increments (0.00175→0.00087)
     coarse_search_angle_offset: 0.349
-    coarse_angle_resolution: 0.00873  # 0.5度刻み（0.0175→0.00873）
-    minimum_angle_penalty: 0.97  # 角度ペナルティ厳格化（0.95→0.97）
-    minimum_distance_penalty: 0.7  # 距離ペナルティも厳格化（0.5→0.7）
+    coarse_angle_resolution: 0.00873  # 0.5 degree increments (0.0175→0.00873)
+    minimum_angle_penalty: 0.97  # Stricter angle penalty (0.95→0.97)
+    minimum_distance_penalty: 0.7  # Also stricter distance penalty (0.5→0.7)
     use_response_expansion: true
-    min_pass_through: 3  # パススルー回数増加（2→3）
-    occupancy_threshold: 0.05  # 占有閾値を下げて詳細表現（0.1→0.05）
+    min_pass_through: 3  # Increase pass-through count (2→3)
+    occupancy_threshold: 0.05  # Lower occupancy threshold for detailed representation (0.1→0.05)
 
     # Rotation-specific optimization
     max_scan_range: 12.0
@@ -132,55 +132,55 @@ slam_toolbox:
     scan_matching_min_distance: 0.01  # 1cm（0.02→0.01）
     scan_matching_min_angle: 0.0087  # 0.5度（0.017→0.0087）
 
-    # Odometry weighting - スキャンマッチング重視に調整
-    translation_variance: 0.002  # オドメトリ信頼度を下げる（0.001→0.002）
-    rotation_variance: 0.008  # 回転も下げる（0.005→0.008）
-    # → スキャンマッチングの重みを相対的に上げる
+    # Odometry weighting - Adjusted to emphasize scan matching
+    translation_variance: 0.002  # Lower odometry confidence (0.001→0.002)
+    rotation_variance: 0.008  # Also lower rotation (0.005→0.008)
+    # → Relatively increase scan matching weight
 
-    # Feature matching - 特徴マッチング強化
+    # Feature matching - Enhanced feature matching
     use_feature_matching: true
-    feature_match_threshold: 0.90  # マッチ閾値を最高レベルに（0.8→0.90）
+    feature_match_threshold: 0.90  # Match threshold at highest level (0.8→0.90)
 
-    # Temporal coherence - 平滑化強化
+    # Temporal coherence - Enhanced smoothing
     use_velocity_smoothing: true
-    velocity_smoothing_window: 10  # 平滑化ウィンドウ大幅拡大（5→10）
+    velocity_smoothing_window: 10  # Significantly expand smoothing window (5→10)
 
-    # Graph optimization - 高頻度最適化
-    optimization_skip_scans: 1  # 毎スキャン最適化（3→1）最高品質
+    # Graph optimization - High-frequency optimization
+    optimization_skip_scans: 1  # Optimize every scan (3→1) highest quality
 
-    # 追加: スキャン品質フィルタリング
-    minimum_scan_points: 50  # 最小スキャン点数（ノイズスキャン除去）
-    scan_consistency_check: true  # スキャン一貫性チェック有効化
+    # Additional: Scan quality filtering
+    minimum_scan_points: 50  # Minimum scan points (noise scan removal)
+    scan_consistency_check: true  # Enable scan consistency check
 
-    # 追加: グリッドマップ品質向上
-    grid_resolution_multiplier: 2.0  # 内部グリッド解像度倍増
-    enable_sub_pixel_accuracy: true  # サブピクセル精度有効化
+    # Additional: Improve grid map quality
+    grid_resolution_multiplier: 2.0  # Double internal grid resolution
+    enable_sub_pixel_accuracy: true  # Enable sub-pixel accuracy
 
-    # 追加: エッジ保存フィルタ
-    enable_edge_preserving_filter: true  # エッジ保存フィルタ有効化
-    edge_detection_threshold: 0.8  # エッジ検出閾値
+    # Additional: Edge preserving filter
+    enable_edge_preserving_filter: true  # Enable edge preserving filter
+    edge_detection_threshold: 0.8  # Edge detection threshold
 
-    # 追加: マルチスケール最適化
-    enable_multiscale_optimization: true  # マルチスケール最適化
-    optimization_levels: 3  # 最適化レベル数
+    # Additional: Multiscale optimization
+    enable_multiscale_optimization: true  # Multiscale optimization
+    optimization_levels: 3  # Number of optimization levels
 
-    # 追加: 外れ値除去強化
-    outlier_rejection_multiplier: 2.0  # 外れ値除去の強度
-    mahalanobis_distance_threshold: 3.0  # マハラノビス距離閾値（統計的外れ値検出）
+    # Additional: Enhanced outlier rejection
+    outlier_rejection_multiplier: 2.0  # Outlier rejection strength
+    mahalanobis_distance_threshold: 3.0  # Mahalanobis distance threshold (statistical outlier detection)
 
-    # 追加: ポーズグラフ最適化強化
-    pose_graph_optimization_iterations: 100  # 反復回数増加（デフォルト50→100）
-    pose_graph_convergence_threshold: 1e-6  # 収束閾値を厳格化（1e-4→1e-6）
+    # Additional: Enhanced pose graph optimization
+    pose_graph_optimization_iterations: 100  # Increase iteration count (default 50→100)
+    pose_graph_convergence_threshold: 1e-6  # Stricter convergence threshold (1e-4→1e-6)
 
-    # 追加: スキャンマッチング品質スコアリング
-    enable_match_quality_scoring: true  # マッチ品質スコアリング有効化
-    minimum_match_quality_score: 0.8  # 最小品質スコア
+    # Additional: Scan matching quality scoring
+    enable_match_quality_scoring: true  # Enable match quality scoring
+    minimum_match_quality_score: 0.8  # Minimum quality score
 
-    # 追加: 壁面検出強化
-    wall_detection_enabled: true  # 壁面検出有効化
-    wall_angle_threshold: 0.087  # 壁面角度閾値（5度）
-    wall_point_density_threshold: 10  # 壁面点密度閾値
+    # Additional: Enhanced wall detection
+    wall_detection_enabled: true  # Enable wall detection
+    wall_angle_threshold: 0.087  # Wall angle threshold (5 degrees)
+    wall_point_density_threshold: 10  # Wall point density threshold
 
-    # 追加: 動的調整パラメータ
-    adaptive_parameter_tuning: true  # 適応的パラメータ調整
-    parameter_adaptation_rate: 0.1  # パラメータ適応率
+    # Additional: Dynamic adjustment parameters
+    adaptive_parameter_tuning: true  # Adaptive parameter tuning
+    parameter_adaptation_rate: 0.1  # Parameter adaptation rate

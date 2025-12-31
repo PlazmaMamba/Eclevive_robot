@@ -120,7 +120,7 @@ def generate_launch_description():
             executable='static_transform_publisher',
             name='base_link_to_stl27_laser',
             #arguments=['0.12','0','0.10', '0','0','0','base_link','stl27_lidar']
-            arguments=['0.01','0','-0.03', '0','0','0','zed_camera_link','stl27_lidar'] #laserの高さは前後のデバイスで一致していないとmerged_scanでslamが安定しない.
+            arguments=['0.01','0','-0.03', '0','0','0','zed_camera_link','stl27_lidar'] # Laser height must match between front and back devices for stable SLAM with merged_scan
             
             #arguments=['0.12','0','0.10','0','0','3.14159','base_link','stl27_laser']
         ),

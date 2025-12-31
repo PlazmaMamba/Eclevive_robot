@@ -1,15 +1,15 @@
 #!/bin/bash
 # ==============================================================================
-# ROS2 Mecanum Robot - 依存パッケージセットアップスクリプト
+# ROS2 Mecanum Robot - Dependency Package Setup Script
 # ==============================================================================
 
 set -e
 
 echo "=========================================="
-echo "ROS2 Mecanum Robot 依存パッケージセットアップ"
+echo "ROS2 Mecanum Robot Dependency Package Setup"
 echo "=========================================="
 
-# ワークスペースディレクトリ
+# Workspace directory
 WS_DIR="$HOME/ros2_ws"
 SRC_DIR="$WS_DIR/src"
 
@@ -20,10 +20,10 @@ cd "$SRC_DIR"
 # ==============================================================================
 echo ""
 echo "=== NVIDIA Isaac ROS ==="
-echo "手動インストールが必要です："
+echo "Manual installation required:"
 echo "  https://nvidia-isaac-ros.github.io/getting_started/index.html"
 echo ""
-echo "必要なパッケージ："
+echo "Required packages:"
 echo "  - isaac_ros_nvblox"
 echo "  - isaac_ros_visual_slam"
 echo "  - isaac_ros_common"
@@ -155,11 +155,11 @@ else
 fi
 
 # ==============================================================================
-# 依存パッケージインストール
+# Install dependency packages
 # ==============================================================================
 echo ""
 echo "=========================================="
-echo "rosdep依存パッケージインストール"
+echo "rosdep Dependency Package Installation"
 echo "=========================================="
 
 cd "$WS_DIR"
@@ -168,11 +168,11 @@ rosdep install --from-paths src --ignore-src -r -y
 
 echo ""
 echo "=========================================="
-echo "セットアップ完了！"
+echo "Setup Complete!"
 echo "=========================================="
 echo ""
-echo "次のステップ："
-echo "  1. ZED SDKをインストール: https://www.stereolabs.com/developers/release"
-echo "  2. NVIDIA Isaac ROSをインストール（上記参照）"
-echo "  3. ビルド: colcon build --symlink-install"
+echo "Next steps:"
+echo "  1. Install ZED SDK: https://www.stereolabs.com/developers/release"
+echo "  2. Install NVIDIA Isaac ROS (see above)"
+echo "  3. Build: colcon build --symlink-install"
 echo ""

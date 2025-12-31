@@ -1,65 +1,65 @@
 /**:
   ros__parameters:
     # ========================================
-    # Nav2統合設定
+    # Nav2 integration settings
     # ========================================
 
-    # Global Frame設定（Nav2がmapフレームを期待）
+    # Global Frame settings (Nav2 expects map frame)
     global_frame: "map"
 
-    # Occupancy Grid出力を有効化
-    # nvbloxはデフォルトでstatic_occupancy_layerを~/static_occupancy_layerに出力
-    # これを/mapにリマップして使用
+    # Enable Occupancy Grid output
+    # nvblox outputs static_occupancy_layer to ~/static_occupancy_layer by default
+    # Remap this to /map for use
 
-    # Map publishing設定
-    publish_occupancy_layer: true           # Occupancy Grid出力を有効化
-    publish_layer_rate_hz: 5.0             # マップ公開頻度（Hz）
+    # Map publishing settings
+    publish_occupancy_layer: true           # Enable Occupancy Grid output
+    publish_layer_rate_hz: 5.0             # Map publishing frequency (Hz)
 
     # Map resolution
-    voxel_size: 0.05                       # 解像度5cm（Nav2と一致）
+    voxel_size: 0.05                       # 5cm resolution (matches Nav2)
 
     # ========================================
-    # LiDAR統合設定（2025-10-21追加）
+    # LiDAR integration settings (added 2025-10-21)
     # ========================================
-    use_lidar: true                        # LiDAR統合を有効化
-    lidar_width: 720                       # マージ済みスキャンの点数（前後LiDAR合計）
-    lidar_height: 1                        # 2D LiDARなので高さは1
-    lidar_min_valid_range_m: 0.1           # 最小有効範囲
-    lidar_max_valid_range_m: 20.0          # 最大有効範囲（LiDARの仕様に合わせる）
+    use_lidar: true                        # Enable LiDAR integration
+    lidar_width: 720                       # Number of points in merged scan (front and rear LiDAR total)
+    lidar_height: 1                        # Height is 1 for 2D LiDAR
+    lidar_min_valid_range_m: 0.1           # Minimum valid range
+    lidar_max_valid_range_m: 20.0          # Maximum valid range (match LiDAR specifications)
 
-    # LiDAR統合頻度
-    integrate_lidar_rate_hz: 30.0          # スキャン更新レート（30Hz程度）
-
-    # ========================================
-    # TSDF設定（静的マッピング用）
-    # ========================================
-    mapping_type: "static_tsdf"            # TSDFベースの静的マッピング
+    # LiDAR integration frequency
+    integrate_lidar_rate_hz: 30.0          # Scan update rate (approximately 30Hz)
 
     # ========================================
-    # Occupancy Grid変換設定
+    # TSDF settings (for static mapping)
+    # ========================================
+    mapping_type: "static_tsdf"            # TSDF-based static mapping
+
+    # ========================================
+    # Occupancy Grid conversion settings
     # ========================================
     static_mapper:
-      # Occupancy確率設定
-      free_region_occupancy_probability: 0.3        # 空き領域の確率（低め）
-      occupied_region_occupancy_probability: 0.9    # 占有領域の確率（高め）
-      unobserved_region_occupancy_probability: 0.5  # 未観測領域の確率（中間）
+      # Occupancy probability settings
+      free_region_occupancy_probability: 0.3        # Free region probability (low)
+      occupied_region_occupancy_probability: 0.9    # Occupied region probability (high)
+      unobserved_region_occupancy_probability: 0.5  # Unobserved region probability (medium)
 
-      # Occupancy判定の幅
-      occupied_region_half_width_m: 0.1    # 障害物判定の半幅（10cm）
+      # Occupancy judgment width
+      occupied_region_half_width_m: 0.1    # Obstacle judgment half-width (10cm)
 
-      # LiDAR統合距離設定（2025-10-21追加）
-      lidar_projective_integrator_max_integration_distance_m: 10.0  # LiDAR統合最大距離
-
-    # ========================================
-    # Map更新頻度の調整
-    # ========================================
-    # Occupancy Grid更新頻度
-    decay_tsdf_rate_hz: 5.0                # TSDF減衰レート
-    clear_map_outside_radius_rate_hz: 1.0  # マップクリア頻度
+      # LiDAR integration distance settings (added 2025-10-21)
+      lidar_projective_integrator_max_integration_distance_m: 10.0  # LiDAR integration maximum distance
 
     # ========================================
-    # QoS設定（Nav2互換性）
+    # Map update frequency adjustment
     # ========================================
-    # Nav2はTransient Localでマップを期待
-    # nvbloxのデフォルト出力はVolatileなので、
-    # static_transform_publisherやtopic_toolsで変換が必要
+    # Occupancy Grid update frequency
+    decay_tsdf_rate_hz: 5.0                # TSDF decay rate
+    clear_map_outside_radius_rate_hz: 1.0  # Map clearing frequency
+
+    # ========================================
+    # QoS settings (Nav2 compatibility)
+    # ========================================
+    # Nav2 expects map with Transient Local
+    # nvblox default output is Volatile, so
+    # conversion via static_transform_publisher or topic_tools is required

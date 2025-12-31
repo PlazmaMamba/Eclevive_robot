@@ -1,23 +1,23 @@
 #!/bin/bash
 
-# TF-Topic同期診断スクリプト
+# TF-Topic Synchronization Diagnostic Script
 # Usage: ./tf_sync_diagnostics.sh [duration_seconds]
 
-DURATION=${1:-30}  # デフォルト30秒間
+DURATION=${1:-30}  # Default 30 seconds
 
-echo "=== TF-Topic同期診断開始 ==="
-echo "診断期間: ${DURATION}秒"
-echo "開始時刻: $(date)"
+echo "=== TF-Topic Synchronization Diagnostics Started ==="
+echo "Diagnostic Duration: ${DURATION} seconds"
+echo "Start Time: $(date)"
 echo
 
-# 1. 現在のTFツリー構造を確認
-echo "1. TFツリー構造:"
+# 1. Check current TF tree structure
+echo "1. TF Tree Structure:"
 echo "======================================"
 timeout 5s ros2 run tf2_tools view_frames || echo "Warning: TF frames could not be retrieved"
 echo
 
-# 2. アクティブなトピック一覧
-echo "2. 関連トピック一覧:"
+# 2. Active topic list
+echo "2. Related Topic List:"
 echo "======================================"
 echo "Odometry topics:"
 ros2 topic list | grep -E "(odom|odometry)" || echo "No odometry topics found"
@@ -27,8 +27,8 @@ echo "TF topics:"
 ros2 topic list | grep -E "(tf|transform)" || echo "No tf topics found"
 echo
 
-# 3. TF変換の遅延チェック
-echo "3. TF変換遅延テスト:"
+# 3. TF transform delay check
+echo "3. TF Transform Delay Test:"
 echo "======================================"
 echo "Testing map -> zed_camera_link transform..."
 ros2 run tf2_ros tf2_echo map zed_camera_link &
@@ -44,8 +44,8 @@ sleep 5
 kill $TF_ECHO_PID 2>/dev/null || true
 echo
 
-# 4. トピックの時刻同期チェック
-echo "4. トピック時刻同期分析:"
+# 4. Topic timestamp synchronization check
+echo "4. Topic Timestamp Synchronization Analysis:"
 echo "======================================"
 echo "Odometry timestamp check:"
 timeout 10s ros2 topic echo --once /zed/zed_node/odom --field header.stamp 2>/dev/null || echo "No odometry data received"
@@ -57,37 +57,37 @@ echo "Current ROS time:"
 timeout 5s ros2 param get /use_sim_time use_sim_time 2>/dev/null || echo "Could not retrieve sim_time setting"
 echo
 
-# 5. 同期コーディネーターの状態確認
-echo "5. TF同期コーディネーター状態:"
+# 5. Sync coordinator status check
+echo "5. TF Sync Coordinator Status:"
 echo "======================================"
 if ros2 node list | grep -q "tf_sync_coordinator"; then
-    echo "✓ TF同期コーディネーターが実行中"
-    echo "統計情報を取得中..."
-    timeout 10s ros2 topic echo --once /rosout --field msg | grep -i "sync" | tail -5 || echo "同期統計が取得できませんでした"
+    echo "✓ TF sync coordinator is running"
+    echo "Retrieving statistics..."
+    timeout 10s ros2 topic echo --once /rosout --field msg | grep -i "sync" | tail -5 || echo "Could not retrieve sync statistics"
 else
-    echo "✗ TF同期コーディネーターが見つかりません"
+    echo "✗ TF sync coordinator not found"
 fi
 echo
 
-# 6. Navigation2ノードの状態確認
-echo "6. Navigation2ノード状態:"
+# 6. Navigation2 node status check
+echo "6. Navigation2 Node Status:"
 echo "======================================"
 NAV_NODES=("planner_server" "controller_server" "bt_navigator" "behavior_server")
 for node in "${NAV_NODES[@]}"; do
     if ros2 node list | grep -q $node; then
-        echo "✓ $node: 実行中"
+        echo "✓ $node: Running"
     else
-        echo "✗ $node: 停止中"
+        echo "✗ $node: Stopped"
     fi
 done
 echo
 
-# 7. リアルタイム診断（指定期間）
-echo "7. リアルタイム時刻同期監視 (${DURATION}秒間):"
+# 7. Real-time diagnostics (specified duration)
+echo "7. Real-time Timestamp Sync Monitoring (${DURATION} seconds):"
 echo "======================================"
-echo "Ctrl+Cで中断..."
+echo "Press Ctrl+C to interrupt..."
 
-# バックグラウンドで各トピックの時刻を監視
+# Monitor timestamp of each topic in background
 {
     while true; do
         ODOM_TIME=$(timeout 2s ros2 topic echo --once /zed/zed_node/odom --field header.stamp.sec 2>/dev/null || echo "N/A")
@@ -109,29 +109,29 @@ echo "Ctrl+Cで中断..."
 } &
 MONITOR_PID=$!
 
-# 指定時間後に監視を終了
+# Terminate monitoring after specified time
 sleep $DURATION
 kill $MONITOR_PID 2>/dev/null || true
 wait $MONITOR_PID 2>/dev/null || true
 
 echo
-echo "=== 診断完了 ==="
-echo "終了時刻: $(date)"
+echo "=== Diagnostics Complete ==="
+echo "End Time: $(date)"
 
-# 推奨対策の表示
+# Display recommended countermeasures
 echo
-echo "=== 推奨対策 ==="
-echo "1. 時刻ずれが大きい場合:"
-echo "   - システム時刻の同期を確認"
-echo "   - transform_tolerance値を調整"
-echo "   - TF同期コーディネーターの許容値を増加"
+echo "=== Recommended Countermeasures ==="
+echo "1. If timestamp deviation is large:"
+echo "   - Check system time synchronization"
+echo "   - Adjust transform_tolerance value"
+echo "   - Increase TF sync coordinator tolerance"
 echo
-echo "2. データが取得できない場合:"
-echo "   - センサーノードの起動状態を確認"
-echo "   - トピック名の不整合をチェック"
-echo "   - ネットワーク接続を確認"
+echo "2. If data cannot be retrieved:"
+echo "   - Check sensor node startup status"
+echo "   - Check topic name inconsistencies"
+echo "   - Verify network connection"
 echo
-echo "3. Navigation2エラーが続く場合:"
-echo "   - QoS設定の互換性を確認"
-echo "   - ノードの再起動を試行"
-echo "   - ログファイルで詳細エラーを確認"
+echo "3. If Navigation2 errors persist:"
+echo "   - Check QoS settings compatibility"
+echo "   - Try restarting nodes"
+echo "   - Check detailed errors in log files"

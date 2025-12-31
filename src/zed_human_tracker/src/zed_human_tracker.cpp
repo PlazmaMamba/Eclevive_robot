@@ -28,7 +28,7 @@ geometry_msgs::msg::Twist cmdVelMsg;
 class zed_human_tracker : public rclcpp::Node {
 public:
     zed_human_tracker() : Node("zed_human_tracker") {
-        // ZEDで人物認識した内容をsubscribeする
+        // Subscribe to human recognition content from ZED
         objectSubscriber_ = this->create_subscription<zed_msgs::msg::ObjectsStamped>(
             "zed/zed_node/body_trk/skeletons",1,std::bind(&zed_human_tracker::objectCallback, this, std::placeholders::_1));
 
@@ -69,7 +69,7 @@ private:
 //------------------------------------------------------------------------------------------
     void aim_goal_point(){
         geometry_msgs::msg::TransformStamped tf;
-        //tryの中にあるlookupTransformでmapから目標となる人のTF（target_person）を生成するの位置を取得している
+        // lookupTransform in the try block retrieves the position to generate the TF (target_person) of the target person from the map
         try {
             tf = target_tf_buffer_->lookupTransform(
                 "base_link", "target_person",
@@ -86,7 +86,7 @@ private:
             return;
         }
 
-        //発見した座標に対して差分からcmd_velに変換してpublishする
+        // Convert the difference from the discovered coordinates to cmd_vel and publish
         
         if(target_point.x > 1.3){ 
             if(target_point.y > 0.3){
@@ -154,23 +154,23 @@ private:
         //ros::Duration(1.0).sleep();
     }    
 
-//---------------------- ZED2iで人物認識した内容の処理を行う ---------------------------------------------------
+//---------------------- Process human recognition content from ZED2i ---------------------------------------------------
     void objectCallback(const zed_msgs::msg::ObjectsStamped::SharedPtr objMsg)
-    {    
+    {
         using namespace std::chrono_literals;
         if (objMsg->objects.size()>0){
-            //target_pointを初期化する
+            //Initialize target_point
             //target_point.x =0.001;
             //target_point.y =0.0001;
             //target_point.z =0.0001;
             //RCLCPP_INFO(this->get_logger(), "I find %ld person", objMsg->objects.size());
-            if(zed_goal_msg.data<1){//すでに目標を発見もしくはゴールしていたなら人物認識していることを除外
-                zed_goal_msg.data=1;//人物認識通知
+            if(zed_goal_msg.data<1){// Exclude person recognition if target has already been found or goal has been reached
+                zed_goal_msg.data=1;// Person recognition notification
             }
-            //人物が複数人見つかった場合、より遠くにいる人を目標地点とする
+            // When multiple people are found, set the person farther away as the target point
             for(uint i = 0 ; i < objMsg->objects.size()  ; i++ ){
                 if(objMsg->objects[i].tracking_state>0){
-                    for(int pose_count = 2 ; pose_count <= 7 ; pose_count++ ){//首下の位置を取得する
+                    for(int pose_count = 2 ; pose_count <= 7 ; pose_count++ ){// Get the position below the neck
                         //if (isnan(objMsg->objects[i].skeleton_3d.keypoints[3].kp[2])) {
                         if (std::isnan(objMsg->objects[i].skeleton_3d.keypoints[3].kp[2])) {
                             body_pose[pose_count] =0;
@@ -185,17 +185,17 @@ private:
                     //RCLCPP_INFO(this->get_logger(), "body_pose[5] =   : %6.3f", body_pose[5]);
                     //RCLCPP_INFO(this->get_logger(), "body_pose[7] =   : %6.3f", body_pose[7]);
 
-                    //肩から上に手を上げた人を見つける
+                    // Find a person who has raised their hand above the shoulder
                     if(body_pose[2] < body_pose[3] || body_pose[5] < body_pose[6]){
                         //RCLCPP_INFO(this->get_logger(), "I find you");
-                        person_finding = true;//
+                        person_finding = true;
                         compare_point.x =objMsg->objects[i].position[0];
                         compare_point.y =objMsg->objects[i].position[1];
                         compare_point.z =objMsg->objects[i].position[2];
                         //target_point.x =objMsg->objects[i].position[0];
                         //target_point.y =objMsg->objects[i].position[1];
                         //target_point.z =objMsg->objects[i].position[2];
-                        if(compare_point.x > target_point.x){//より遠くの人をターゲットにする
+                        if(compare_point.x > target_point.x){// Target the person who is farther away
                             target_point.x =objMsg->objects[i].position[0];
                             target_point.y =objMsg->objects[i].position[1];
                             target_point.z =objMsg->objects[i].position[2];
@@ -205,15 +205,15 @@ private:
                         RCLCPP_INFO(this->get_logger(), "target_point.y =   : %6.3f", target_point.y);
                         RCLCPP_INFO(this->get_logger(), "target_point.z =   : %6.3f", target_point.z);
                         RCLCPP_INFO(this->get_logger(),"------------------------------------------");
-                        zed_goal_msg.data=2;//目標発見通知
-                        //ターゲットとなった人の角度に合わせてアームの向きを合わせる
+                        zed_goal_msg.data=2;// Target discovery notification
+                        // Align the arm direction to match the angle of the target person
                         arm_message.data = { int32_t(atan(target_point.y/target_point.x)*80)
-                                            ,arm_message.data[1] 
+                                            ,arm_message.data[1]
                                             ,arm_message.data[2]
                                             ,arm_message.data[3]
                                             };
                         arm_pose_Publisher_->publish(arm_message);
-                        //アームのグリッパーをパクパクさせる
+                        // Make the arm gripper open and close repeatedly
                         rclcpp::sleep_for(600ms);
                         arm_message.data = { int32_t(atan(target_point.y/target_point.x)*80)
                                             ,arm_message.data[1] 
@@ -242,10 +242,10 @@ private:
                                             };
                         arm_pose_Publisher_->publish(arm_message);
 
-                        current_arm_pose_Publisher_->publish(arm_message);//最後に現状の角度を出力させる
+                        current_arm_pose_Publisher_->publish(arm_message);// Finally output the current angle
                         rclcpp::sleep_for(500ms);
                         //RCLCPP_INFO(this->get_logger(), "taget_point.x= %5.8f",target_point.x);
-                        break;   
+                        break;
                     }
                     else{
                         person_finding = false;
@@ -253,12 +253,12 @@ private:
                 }//end if
             }//end for
             if(target_point.x > 0.5){
-                //目標となる人のTF（target_person）を生成する
+                // Generate the TF (target_person) of the target person
                 static_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
                 geometry_msgs::msg::TransformStamped transformStamped;
                 transformStamped.header.stamp = this->now();
-                transformStamped.header.frame_id = "zed_camera_link"; // 親フレーム
-                transformStamped.child_frame_id  = "target_person"; // 子フレーム
+                transformStamped.header.frame_id = "zed_camera_link"; // Parent frame
+                transformStamped.child_frame_id  = "target_person"; // Child frame
                 transformStamped.transform.translation = target_point;
                 double offset =0.6;
                 transformStamped.transform.translation.x = target_point.x - offset;
@@ -268,26 +268,26 @@ private:
                 transformStamped.transform.rotation.y = quaternion.y();
                 transformStamped.transform.rotation.z = quaternion.z();
                 transformStamped.transform.rotation.w = quaternion.w();
-                
-                // tfメッセージをbroadcast
+
+                // Broadcast tf message
                 static_tf_broadcaster_->sendTransform(transformStamped);
 
                 aim_goal_point();
             }
             else if(target_point.x <= 0.5 ){
-                zed_goal_msg.data=3;//ゴールしたことを通知
+                zed_goal_msg.data=3;// Notify that goal has been reached
                 zed_goal_status_->publish(zed_goal_msg);
             }
         }//end if (objMsg->objects.size()>0)
         else{
-        //callbackしている時点で何らか認識しているため、ここでは特に何もしない。  
+        // Since something is being recognized at the callback point, nothing is done here.
         }
-        //目標地点を初期化する
+        // Initialize target point
         target_point.x =0.001;
         target_point.y =0.0001;
         target_point.z =0.0001;
     } //end objectCallback
-//-------------------現状のアーム角度を取得する -----------------------------------------------
+//------------------- Get current arm angle -----------------------------------------------
 void arm_pose_Callback(const std_msgs::msg::Int32MultiArray::SharedPtr msgin)
     {
         arm_message.data ={  msgin->data[0]
@@ -296,11 +296,11 @@ void arm_pose_Callback(const std_msgs::msg::Int32MultiArray::SharedPtr msgin)
                             ,msgin->data[3]
                             };
     }
-//------------------1秒ごとにodomとZED2カメラの位置を取得する--------------------------------------
+//------------------ Get odom and ZED2 camera position every second --------------------------------------
     void on_timer()
     {
         geometry_msgs::msg::TransformStamped t;
-        //tryの中にあるlookupTransformでカメラの位置を取得している
+        // lookupTransform in the try block retrieves the camera position
         try {
             t = tf_buffer_->lookupTransform(
                 "odom", "zed_camera_link",
@@ -323,12 +323,12 @@ void arm_pose_Callback(const std_msgs::msg::Int32MultiArray::SharedPtr msgin)
             return;
         }
         if(pre_zed_goal_msg.data!=zed_goal_msg.data){
-            zed_goal_status_->publish(zed_goal_msg);//ゴール認識状態を通知
+            zed_goal_status_->publish(zed_goal_msg);// Notify goal recognition state
             pre_zed_goal_msg.data=zed_goal_msg.data;
         }
     }
 
-    //------------action_client_のfeedbackを生成-----------------------------------------------------------
+    //------------ Generate feedback for action_client_ -----------------------------------------------------------
     void feedbackCallback(GoalHandleNavigateToPose::SharedPtr,const std::shared_ptr<const NavigateToPose::Feedback> feedback)
     {
         RCLCPP_INFO(get_logger(), "Distance remaininf = %f", feedback->distance_remaining);
@@ -351,15 +351,15 @@ void arm_pose_Callback(const std_msgs::msg::Int32MultiArray::SharedPtr msgin)
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr zed_goal_status_;
     rclcpp::TimerBase::SharedPtr timer_{nullptr};
     std::string recognization_frame_;
-    bool person_finding;                        //人物認識できた際のフラグ
-    geometry_msgs::msg::Vector3 compare_point;  //手を上げた人の位置取得用(それぞれの人の位置) 
-    geometry_msgs::msg::Vector3 target_point;   //手を上げた人の位置取得用(比較して選定した人の最終目標位置)
-    float body_pose[20];             
-    std_msgs::msg::Int32 zed_goal_msg;  
+    bool person_finding;                        // Flag when person recognition is successful
+    geometry_msgs::msg::Vector3 compare_point;  // For acquiring position of person with raised hand (each person's position)
+    geometry_msgs::msg::Vector3 target_point;   // For acquiring position of person with raised hand (final target position of the selected person after comparison)
+    float body_pose[20];
+    std_msgs::msg::Int32 zed_goal_msg;
     std_msgs::msg::Int32 pre_zed_goal_msg;
-    geometry_msgs::msg::TransformStamped robot_pose;  //odom→zed_camera_link間となるロボット位置取得用
-    double robot_pose_yaw=0.0001;              //zed2による物体認識から目標位置の角度取得用
-    double leave_distance=0.60;                //1歩下がった位置にゴールを指定するため、1歩の距離を指定する
+    geometry_msgs::msg::TransformStamped robot_pose;  // For acquiring robot position between odom→zed_camera_link
+    double robot_pose_yaw=0.0001;              // For acquiring target position angle from ZED2 object recognition
+    double leave_distance=0.60;                // Specify one step distance to set goal at a position one step back
 
 };
 

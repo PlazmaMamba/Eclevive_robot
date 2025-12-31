@@ -1,6 +1,6 @@
 zed_gesture_controller:
   ros__parameters:
-    # トピック名設定
+    # Topic name settings
     skeleton_topic: "zed/zed_node/body_trk/skeletons"
     target_arm_pose_topic: "target_arm_pose"
     current_arm_pose_topic: "current_arm_pose"
@@ -8,22 +8,22 @@ zed_gesture_controller:
     goal_pose_topic: "goal_pose"
     zed_goal_status_topic: "zed_goal_status"
 
-    # 速度パラメータ - 両手上げ：前進
-    forward_vel_fast: 0.5    # 前進高速（m/s）
-    forward_vel_slow: 0.1    # 前進低速（m/s）
+    # Velocity parameters - Both hands up: Forward
+    forward_vel_fast: 0.5    # Forward high speed (m/s)
+    forward_vel_slow: 0.1    # Forward low speed (m/s)
 
-    # 速度パラメータ - 右手曲げ：右旋回
-    turn_right_vel_fast: 1.6   # 右旋回高速（rad/s）
-    turn_right_vel_slow: 0.05  # 右旋回低速（rad/s）
+    # Velocity parameters - Right hand bent: Right turn
+    turn_right_vel_fast: 1.6   # Right turn high speed (rad/s)
+    turn_right_vel_slow: 0.05  # Right turn low speed (rad/s)
 
-    # 速度パラメータ - 左手曲げ：左旋回
-    turn_left_vel_fast: -1.6   # 左旋回高速（rad/s）
-    turn_left_vel_slow: -0.05  # 左旋回低速（rad/s）
+    # Velocity parameters - Left hand bent: Left turn
+    turn_left_vel_fast: -1.6   # Left turn high speed (rad/s)
+    turn_left_vel_slow: -0.05  # Left turn low speed (rad/s)
 
-    # 速度パラメータ - 右手水平：右移動
-    strafe_right_vel_fast: 0.70   # 右移動高速（m/s）
-    strafe_right_vel_slow: 0.10   # 右移動低速（m/s）
+    # Velocity parameters - Right hand horizontal: Right strafe
+    strafe_right_vel_fast: 0.70   # Right strafe high speed (m/s)
+    strafe_right_vel_slow: 0.10   # Right strafe low speed (m/s)
 
-    # 速度パラメータ - 左手水平：左移動
-    strafe_left_vel_fast: -0.70   # 左移動高速（m/s）
-    strafe_left_vel_slow: -0.10   # 左移動低速（m/s）
+    # Velocity parameters - Left hand horizontal: Left strafe
+    strafe_left_vel_fast: -0.70   # Left strafe high speed (m/s)
+    strafe_left_vel_slow: -0.10   # Left strafe low speed (m/s)

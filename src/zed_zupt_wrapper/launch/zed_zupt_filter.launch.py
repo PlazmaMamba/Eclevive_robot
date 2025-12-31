@@ -2,14 +2,14 @@
 """
 ZED2i ZUPT Filter Launch File
 
-ZED2iのオドメトリにZUPT（Zero-Velocity Update）フィルタを適用します。
+Applies ZUPT (Zero-Velocity Update) filter to ZED2i odometry.
 
-機能:
-  - IMUデータから静止状態を検出
-  - Visual Odometryの暴走を抑制
-  - 急激な速度変化を制限
+Features:
+  - Detect stationary state from IMU data
+  - Suppress Visual Odometry drift
+  - Limit rapid velocity changes
 
-使用方法:
+Usage:
   ros2 launch zed_zupt_wrapper zed_zupt_filter.launch.py
 """
 
@@ -20,13 +20,13 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    # パッケージのconfigディレクトリパス
+    # Package config directory path
     config_dir = os.path.join(
         get_package_share_directory('zed_zupt_wrapper'),
         'config'
     )
 
-    # パラメータファイルパス
+    # Parameter file path
     params_file = os.path.join(config_dir, 'zed_zupt_params.yaml')
 
     return LaunchDescription([

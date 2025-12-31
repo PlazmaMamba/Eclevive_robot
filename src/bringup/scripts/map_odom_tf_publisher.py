@@ -2,16 +2,16 @@
 """
 map→odom TF Publisher for nvblox Navigation
 
-このノードは、nvbloxを使用したナビゲーションシステムにおいて、
-map→odomのTF変換を配信します。
+This node publishes map→odom TF transformation for navigation systems
+using nvblox.
 
-動作原理:
-1. nvbloxは/nvblox_node/static_occupancy_gridをmapフレームで配信
-2. ZED Visual Odometryはodom→zed_camera_linkのTFを配信
-3. このノードがmap→odomのTFを配信し、TFツリーを完成させる
+Operating Principle:
+1. nvblox publishes /nvblox_node/static_occupancy_grid in map frame
+2. ZED Visual Odometry publishes odom→zed_camera_link TF
+3. This node publishes map→odom TF to complete the TF tree
 
-初期状態では恒等変換（map = odom）を配信し、
-将来的にはSLAMのループクロージャなどで補正可能。
+Initially publishes identity transform (map = odom),
+which can be corrected in the future with SLAM loop closure, etc.
 """
 
 import rclpy
@@ -25,11 +25,11 @@ class MapOdomTfPublisher(Node):
     def __init__(self):
         super().__init__('map_odom_tf_publisher')
 
-        # パラメータ
+        # Parameters
         self.declare_parameter('map_frame', 'map')
         self.declare_parameter('odom_frame', 'odom')
         self.declare_parameter('publish_rate', 50.0)  # Hz
-        self.declare_parameter('use_static_transform', True)  # 静的変換を使用
+        self.declare_parameter('use_static_transform', True)  # Use static transform
 
         self.map_frame = self.get_parameter('map_frame').value
         self.odom_frame = self.get_parameter('odom_frame').value
@@ -39,7 +39,7 @@ class MapOdomTfPublisher(Node):
         # TF broadcaster
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
-        # 初期変換（恒等変換: map = odom）
+        # Initial transform (identity transform: map = odom)
         self.map_to_odom = TransformStamped()
         self.map_to_odom.header.frame_id = self.map_frame
         self.map_to_odom.child_frame_id = self.odom_frame
@@ -51,8 +51,8 @@ class MapOdomTfPublisher(Node):
         self.map_to_odom.transform.rotation.z = 0.0
         self.map_to_odom.transform.rotation.w = 1.0
 
-        # Odometry subscriber（将来の拡張用）
-        # 現在は静的変換のみだが、将来的にodomを監視して補正可能
+        # Odometry subscriber (for future expansion)
+        # Currently only static transform, but can monitor odom for correction in the future
         self.odom_sub = self.create_subscription(
             Odometry,
             '/zed/zed_node/odom',
@@ -60,7 +60,7 @@ class MapOdomTfPublisher(Node):
             10
         )
 
-        # TF配信タイマー
+        # TF publishing timer
         timer_period = 1.0 / self.publish_rate
         self.timer = self.create_timer(timer_period, self.publish_tf)
 
@@ -74,18 +74,18 @@ class MapOdomTfPublisher(Node):
 
     def odom_callback(self, msg: Odometry):
         """
-        Odometry callback（将来の拡張用）
+        Odometry callback (for future expansion)
 
-        現在は静的変換のみだが、将来的にはここで：
-        - ループクロージャ検出
-        - グローバル位置推定
-        - ドリフト補正
-        などを実装可能
+        Currently only static transform, but can implement in the future:
+        - Loop closure detection
+        - Global pose estimation
+        - Drift correction
+        etc.
         """
         pass
 
     def publish_tf(self):
-        """map→odom TFを配信"""
+        """Publish map→odom TF"""
         self.map_to_odom.header.stamp = self.get_clock().now().to_msg()
         self.tf_broadcaster.sendTransform(self.map_to_odom)
 

@@ -5,13 +5,13 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    # パッケージのconfigディレクトリのパスを取得
+    # Get package config directory path
     config_dir = os.path.join(
         get_package_share_directory('zed_goal_publisher'),
         'config'
     )
 
-    # YAMLパラメータファイルのパス
+    # YAML parameter file path
     params_file = os.path.join(config_dir, 'zed_goal_publisher.yaml')
 
     return LaunchDescription([

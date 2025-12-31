@@ -1,126 +1,126 @@
 # zed_goal_publisher
 
-ZED2iカメラを使用した人物認識とジェスチャー制御によるロボット操作パッケージ
+Robot control package using human recognition and gesture control with ZED2i camera
 
-## 概要
+## Overview
 
-このパッケージは、ZED2iステレオカメラで人物の骨格を認識し、ジェスチャーに応じてメカナムホイールロボットを制御します。
+This package recognizes human skeleton using the ZED2i stereo camera and controls a mecanum wheel robot based on gestures.
 
-## 機能
+## Features
 
-### ジェスチャー認識
-- **両手を肩から上に上げる** → 前進
-- **右手を曲げて上げる** → 右旋回
-- **左手を曲げて上げる** → 左旋回
-- **右手を水平に伸ばす** → 右移動
-- **左手を水平に伸ばす** → 左移動
+### Gesture Recognition
+- **Raise both hands above shoulders** → Move forward
+- **Bend and raise right hand** → Turn right
+- **Bend and raise left hand** → Turn left
+- **Extend right hand horizontally** → Strafe right
+- **Extend left hand horizontally** → Strafe left
 
-## 起動方法
+## Launch Instructions
 
-### Launch ファイルを使用（推奨）
+### Using Launch File (Recommended)
 
 ```bash
 ros2 launch zed_goal_publisher zed_goal_publisher.launch.py
 ```
 
-### 直接実行
+### Direct Execution
 
 ```bash
 ros2 run zed_goal_publisher zed_goal_publisher --ros-args --params-file $(ros2 pkg prefix zed_goal_publisher)/share/zed_goal_publisher/config/zed_goal_publisher.yaml
 ```
 
-## パラメータ設定
+## Parameter Configuration
 
-パラメータは `config/zed_goal_publisher.yaml` で設定できます。
+Parameters can be configured in `config/zed_goal_publisher.yaml`.
 
-### トピック名設定
+### Topic Name Configuration
 
 ```yaml
-skeleton_topic: "zed/zed_node/body_trk/skeletons"  # ZEDの骨格認識トピック
-target_arm_pose_topic: "target_arm_pose"            # アーム目標姿勢
-current_arm_pose_topic: "current_arm_pose"          # アーム現在姿勢
-cmd_vel_topic: "cmd_vel"                            # 速度指令出力
-goal_pose_topic: "goal_pose"                        # ゴール位置
-zed_goal_status_topic: "zed_goal_status"            # ゴール状態
+skeleton_topic: "zed/zed_node/body_trk/skeletons"  # ZED skeleton tracking topic
+target_arm_pose_topic: "target_arm_pose"            # Arm target pose
+current_arm_pose_topic: "current_arm_pose"          # Arm current pose
+cmd_vel_topic: "cmd_vel"                            # Velocity command output
+goal_pose_topic: "goal_pose"                        # Goal position
+zed_goal_status_topic: "zed_goal_status"            # Goal status
 ```
 
-### 速度パラメータ
+### Velocity Parameters
 
-#### 前進（両手上げ）
+#### Forward Movement (Both Hands Raised)
 ```yaml
-forward_vel_fast: 0.5    # 前進高速（m/s）
-forward_vel_slow: 0.1    # 前進低速（m/s）
+forward_vel_fast: 0.5    # Forward high speed (m/s)
+forward_vel_slow: 0.1    # Forward low speed (m/s)
 ```
 
-#### 右旋回（右手曲げ）
+#### Turn Right (Right Hand Bent)
 ```yaml
-turn_right_vel_fast: 1.6   # 右旋回高速（rad/s）
-turn_right_vel_slow: 0.05  # 右旋回低速（rad/s）
+turn_right_vel_fast: 1.6   # Turn right high speed (rad/s)
+turn_right_vel_slow: 0.05  # Turn right low speed (rad/s)
 ```
 
-#### 左旋回（左手曲げ）
+#### Turn Left (Left Hand Bent)
 ```yaml
-turn_left_vel_fast: -1.6   # 左旋回高速（rad/s）
-turn_left_vel_slow: -0.05  # 左旋回低速（rad/s）
+turn_left_vel_fast: -1.6   # Turn left high speed (rad/s)
+turn_left_vel_slow: -0.05  # Turn left low speed (rad/s)
 ```
 
-#### 右移動（右手水平）
+#### Strafe Right (Right Hand Horizontal)
 ```yaml
-strafe_right_vel_fast: 0.70   # 右移動高速（m/s）
-strafe_right_vel_slow: 0.10   # 右移動低速（m/s）
+strafe_right_vel_fast: 0.70   # Strafe right high speed (m/s)
+strafe_right_vel_slow: 0.10   # Strafe right low speed (m/s)
 ```
 
-#### 左移動（左手水平）
+#### Strafe Left (Left Hand Horizontal)
 ```yaml
-strafe_left_vel_fast: -0.70   # 左移動高速（m/s）
-strafe_left_vel_slow: -0.10   # 左移動低速（m/s）
+strafe_left_vel_fast: -0.70   # Strafe left high speed (m/s)
+strafe_left_vel_slow: -0.10   # Strafe left low speed (m/s)
 ```
 
-## パラメータ調整方法
+## Parameter Adjustment Instructions
 
-1. `config/zed_goal_publisher.yaml` を編集
-2. 速度値を変更（例：もっとゆっくり動かしたい場合は値を小さくする）
-3. パッケージをビルド（symlink-installを使用している場合は不要）
+1. Edit `config/zed_goal_publisher.yaml`
+2. Modify velocity values (example: reduce values if you want slower movement)
+3. Build the package (not required if using symlink-install)
 
 ```bash
 colcon build --packages-select zed_goal_publisher --symlink-install
 ```
 
-4. 再起動
+4. Restart
 
 ```bash
 ros2 launch zed_goal_publisher zed_goal_publisher.launch.py
 ```
 
-## トピック
+## Topics
 
 ### Subscribe
-- `/zed/zed_node/body_trk/skeletons` (zed_msgs/msg/ObjectsStamped) - 骨格認識データ
-- `/target_arm_pose` (std_msgs/msg/Int32MultiArray) - アーム目標姿勢
+- `/zed/zed_node/body_trk/skeletons` (zed_msgs/msg/ObjectsStamped) - Skeleton tracking data
+- `/target_arm_pose` (std_msgs/msg/Int32MultiArray) - Arm target pose
 
 ### Publish
-- `/cmd_vel` (geometry_msgs/msg/Twist) - 速度指令
-- `/goal_pose` (geometry_msgs/msg/PoseStamped) - ナビゲーションゴール
-- `/target_arm_pose` (std_msgs/msg/Int32MultiArray) - アーム目標姿勢
-- `/current_arm_pose` (std_msgs/msg/Int32MultiArray) - アーム現在姿勢
-- `/zed_goal_status` (std_msgs/msg/Int32) - ゴール状態
+- `/cmd_vel` (geometry_msgs/msg/Twist) - Velocity command
+- `/goal_pose` (geometry_msgs/msg/PoseStamped) - Navigation goal
+- `/target_arm_pose` (std_msgs/msg/Int32MultiArray) - Arm target pose
+- `/current_arm_pose` (std_msgs/msg/Int32MultiArray) - Arm current pose
+- `/zed_goal_status` (std_msgs/msg/Int32) - Goal status
 
-## ファイル構成
+## File Structure
 
 ```
 zed_goal_publisher/
 ├── src/
-│   └── zed_goal_publisher.cpp      # メインプログラム
+│   └── zed_goal_publisher.cpp      # Main program
 ├── launch/
-│   └── zed_goal_publisher.launch.py # Launchファイル
+│   └── zed_goal_publisher.launch.py # Launch file
 ├── config/
-│   └── zed_goal_publisher.yaml      # パラメータ設定
+│   └── zed_goal_publisher.yaml      # Parameter configuration
 ├── CMakeLists.txt
 ├── package.xml
 └── README.md
 ```
 
-## 依存関係
+## Dependencies
 
 - rclcpp
 - rclcpp_action
@@ -133,10 +133,10 @@ zed_goal_publisher/
 - tf2_geometry_msgs
 - sensor_msgs
 
-## 改良履歴
+## Revision History
 
 ### 2025-10-12
-- トピック名をYAMLパラメータから設定可能に変更
-- 速度値（linear.x, linear.y, angular.z）をYAMLパラメータ化
-- launchファイル追加
-- パラメータファイル追加
+- Changed to allow topic names to be configured from YAML parameters
+- Parameterized velocity values (linear.x, linear.y, angular.z) in YAML
+- Added launch file
+- Added parameter file

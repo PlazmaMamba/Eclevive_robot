@@ -27,26 +27,26 @@ public:
 private:
     void pointcloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
     {
-        // ポイントクラウドからデータを取得
+        // Get data from point cloud
         sensor_msgs::PointCloud2ConstIterator<float> iter_x(*msg, "x");
         sensor_msgs::PointCloud2ConstIterator<float> iter_y(*msg, "y");
         sensor_msgs::PointCloud2ConstIterator<float> iter_z(*msg, "z");
 
-        // 最小値を初期化
+        // Initialize minimum value
         float min_distance = std::numeric_limits<float>::max();
 
-        //ポイントクラウドデータの各ポイントに対して処理を行う
+        // Process each point in the point cloud data
         for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
         {
-            // ポイントの座標を取得
+            // Get point coordinates
             float x = *iter_x;
             float y = *iter_y;
             float z = *iter_z;
 
-            // 取得したポイントから距離を計算
+            // Calculate distance from the acquired point
             float distance = std::sqrt(x*x + y*y + z*z);
 
-            // 最小距離の入れ替え
+            // Update minimum distance
             if (distance < min_distance)
             {
                 min_distance = distance;
@@ -54,9 +54,9 @@ private:
             }
         }
 
-        //32cm以下の点群を見つけたら前進を止める
+        // Stop forward movement if point cloud is found below 32cm
         if(min_distance <= 0.34){
-            point_ems_call_value_ = 11;    
+            point_ems_call_value_ = 11;
             RCLCPP_INFO(get_logger(),"min_distance = %6.4f ",min_distance );
         }
         else if(min_distance <= 0.38){
@@ -66,7 +66,7 @@ private:
         else{
             point_ems_call_value_ = 0;
         }
-        
+
     }
 
     void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
@@ -82,9 +82,9 @@ private:
             }
         }
 
-        //18cm以下の点群を見つけたら後進を止める
+        // Stop backward movement if point cloud is found below 18cm
         if(laser_min_range <= 0.30){
-            laser_ems_call_value_ = 11;    
+            laser_ems_call_value_ = 11;
         }
         else if(laser_min_range <= 0.38){
             laser_ems_call_value_ =  1;

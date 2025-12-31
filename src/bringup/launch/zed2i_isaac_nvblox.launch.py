@@ -2,21 +2,21 @@
 """
 ZED2i Isaac ROS nvblox Integration Launch File
 
-このlaunchファイルは、ZED2iカメラとNVIDIA Isaac ROS nvbloxを統合して起動します。
-- ZED2iカメラドライバ（Isaac ROS互換設定）
-- nvblox 3Dマッピング
-- ZED Gesture Controller（ジェスチャー制御）
-- 可視化ツール（オプショナル）
+This launch file starts ZED2i camera integrated with NVIDIA Isaac ROS nvblox.
+- ZED2i camera driver (Isaac ROS compatible configuration)
+- nvblox 3D mapping
+- ZED Gesture Controller (gesture control)
+- Visualization tools (optional)
 
-使用方法:
+Usage:
   ros2 launch bringup zed2i_isaac_nvblox.launch.py
   ros2 launch bringup zed2i_isaac_nvblox.launch.py enable_visualization:=false
   ros2 launch bringup zed2i_isaac_nvblox.launch.py camera_name:=zed2i
 
-機能:
-  - ジェスチャーでロボット制御（前進、旋回、横移動）
-  - ジェスチャーでナビゲーションゴール設定
-  - PS5コントローラーでモード切替可能
+Features:
+  - Robot control with gestures (forward, turn, lateral movement)
+  - Navigation goal setting with gestures
+  - Mode switching with PS5 controller
 """
 
 import os
@@ -33,10 +33,10 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     """
-    ZED2i + nvblox統合launchファイル
+    ZED2i + nvblox integrated launch file
     """
 
-    # Launch引数の定義
+    # Define launch arguments
     camera_name_arg = DeclareLaunchArgument(
         'camera_name',
         default_value='zed',
@@ -69,19 +69,19 @@ def generate_launch_description():
         choices=['debug', 'info', 'warn', 'error']
     )
 
-    # Launch設定の取得
+    # Get launch configurations
     camera_name = LaunchConfiguration('camera_name')
     camera_model = LaunchConfiguration('camera_model')
     enable_visualization = LaunchConfiguration('enable_visualization')
     container_name = LaunchConfiguration('container_name')
     log_level = LaunchConfiguration('log_level')
 
-    # パッケージディレクトリの取得
+    # Get package directories
     zed_wrapper_dir = get_package_share_directory('zed_wrapper')
     nvblox_examples_dir = get_package_share_directory('nvblox_examples_bringup')
 
-    # コンポーネントコンテナの作成
-    # nvbloxとZEDカメラを同じコンテナで実行（効率化のため）
+    # Create component container
+    # Run nvblox and ZED camera in same container (for efficiency)
     container = ComposableNodeContainer(
         name=container_name,
         namespace='',
@@ -92,7 +92,7 @@ def generate_launch_description():
         emulate_tty=True,
     )
 
-    # ZED2i カメラドライバの起動（Isaac ROS互換設定）
+    # Launch ZED2i camera driver (Isaac ROS compatible configuration)
     zed_camera_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(zed_wrapper_dir, 'launch', 'zed2i_isaac_camera.launch.py')
@@ -103,24 +103,24 @@ def generate_launch_description():
             'container_name': container_name,
             'publish_urdf': 'true',
             'publish_tf': 'true',
-            'publish_map_tf': 'false',  # nvbloxがmap->odomを配信
+            'publish_map_tf': 'false',  # nvblox publishes map->odom
             'publish_imu_tf': 'false',
         }.items()
     )
 
-    # nvblox 3Dマッピングの起動
+    # Launch nvblox 3D mapping
     nvblox_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nvblox_examples_dir, 'launch', 'perception', 'nvblox.launch.py')
         ),
         launch_arguments={
             'container_name': container_name,
-            'mode': 'static',  # 静的環境マッピングモード
-            'camera': 'zed2',  # nvblox内部でZED2設定を使用
+            'mode': 'static',  # Static environment mapping mode
+            'camera': 'zed2',  # Use ZED2 settings internally in nvblox
         }.items()
     )
 
-    # ZED Gesture Controller（ジェスチャー制御）
+    # ZED Gesture Controller (gesture control)
     zed_gesture_controller_dir = get_package_share_directory('zed_gesture_controller')
     zed_gesture_controller_config = os.path.join(
         zed_gesture_controller_dir, 'config', 'zed_gesture_controller.yaml'
@@ -135,13 +135,13 @@ def generate_launch_description():
         emulate_tty=True,
     )
 
-    # ZED Gesture Controllerをカメラ起動後に遅延起動
+    # Delayed launch of ZED Gesture Controller after camera startup
     load_zed_gesture_controller = TimerAction(
-        period=5.0,  # ZEDカメラが完全に起動するまで5秒待機
+        period=5.0,  # Wait 5 seconds for ZED camera to fully start
         actions=[zed_gesture_controller_node]
     )
 
-    # 可視化（オプショナル）
+    # Visualization (optional)
     visualization_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nvblox_examples_dir, 'launch', 'visualization', 'visualization.launch.py')
@@ -153,7 +153,7 @@ def generate_launch_description():
         condition=IfCondition(enable_visualization)
     )
 
-    # ログ情報
+    # Log information
     log_info_start = LogInfo(
         msg='========================================\n'
             'Starting ZED2i Isaac ROS nvblox Integration\n'
@@ -177,35 +177,35 @@ def generate_launch_description():
             '  map -> odom -> zed_camera_link -> base_link\n'
     )
 
-    # LaunchDescriptionの構築
+    # Build LaunchDescription
     return LaunchDescription([
-        # 引数の宣言
+        # Declare arguments
         camera_name_arg,
         camera_model_arg,
         enable_visualization_arg,
         container_name_arg,
         log_level_arg,
 
-        # ログ情報
+        # Log information
         log_info_start,
         log_info_topics,
 
-        # コンポーネントコンテナ
+        # Component container
         container,
 
-        # ZED2iカメラ起動
+        # Launch ZED2i camera
         zed_camera_launch,
 
-        # nvbloxマッピング起動
+        # Launch nvblox mapping
         nvblox_launch,
 
-        # ZED Gesture Controller起動（遅延）
+        # Launch ZED Gesture Controller (delayed)
         load_zed_gesture_controller,
 
-        # 可視化（条件付き）
+        # Visualization (conditional)
         visualization_launch,
 
-        # 完了ログ
+        # Completion log
         LogInfo(
             msg='\n========================================\n'
                 'ZED2i Isaac ROS nvblox launched successfully!\n'

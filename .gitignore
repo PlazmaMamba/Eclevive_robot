@@ -1,4 +1,4 @@
-# ROS2ビルド成果物
+# ROS2 build artifacts
 build/
 install/
 log/
@@ -10,7 +10,7 @@ __pycache__/
 *.so
 .Python
 
-# バイナリファイル
+# Binary files
 *.stl
 *.dae
 *.gif
@@ -21,18 +21,18 @@ __pycache__/
 *.pdf
 *.gv
 
-# ログファイル・一時ファイル
+# Log files and temporary files
 *.log
 *.txt
 *.meta
 *.backup
 .claudeignore
 
-# テストスクリプト
+# Test scripts
 test_*.sh
 build_*.sh
 
-# ドキュメント（README.md以外）
+# Documentation (except README.md)
 *.md
 !README.md
 
@@ -48,7 +48,7 @@ build_*.sh
 Thumbs.db
 
 # ==============================================================================
-# 外部パッケージ（Git submoduleまたは手動インストール）
+# External packages (Git submodule or manual installation)
 # ==============================================================================
 
 # NVIDIA Isaac ROS
@@ -87,7 +87,7 @@ src/laser_filters/
 src/laser_merger2/
 src/ros2_laser_scan_merger/
 
-# その他サードパーティ
+# Other third-party packages
 src/pointcloud_to_laserscan/
 src/rf2o_laser_odometry/
 src/micro_ros_setup/
@@ -97,7 +97,7 @@ src/velodyne/
 src/gazebo_ros_pkgs/
 src/eProsima/
 
-# その他除外
+# Other exclusions
 .claude/
 firmware/
 isaac_ros_assets/
@@ -109,7 +109,7 @@ src/uros/
 src/voicevox_ros2/
 
 # ==============================================================================
-# 自作パッケージ（これらはGit管理対象）
+# Custom packages (these are managed by Git)
 # ==============================================================================
 # src/bringup/
 # src/cmd_vel_float_changer/

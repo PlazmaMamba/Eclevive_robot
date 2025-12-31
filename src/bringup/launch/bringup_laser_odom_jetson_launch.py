@@ -42,8 +42,8 @@ def generate_launch_description():
             package='zed_imu_republisher',
             executable='imu_republisher',
             name='zed_imu_republisher',
-        ),        
-        #rf2o_laser_odometrがtfしか発行しないため、tfをodomに変換するノードを以下で発行する
+        ),
+        # rf2o_laser_odometry only publishes tf, so the following node converts tf to odom
         Node(
             package='odom_publisher',
             executable='odom_publisher',

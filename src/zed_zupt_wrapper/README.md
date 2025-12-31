@@ -1,108 +1,108 @@
 # ZED ZUPT Wrapper
 
-ZED2iのVisual OdometryにZUPT (Zero-Velocity Update) フィルタを適用し、オドメトリの暴走を防止するパッケージです。
+A package that applies a ZUPT (Zero-Velocity Update) filter to ZED2i Visual Odometry to prevent odometry drift and instability.
 
-## 問題
+## Problem
 
-ZED2iのVisual Odometryは以下の状況で不安定になり、オドメトリが暴走します：
+ZED2i Visual Odometry becomes unstable and drifts uncontrollably in the following situations:
 
-1. **暗い環境**: カメラ映像が暗く、特徴点が不足
-2. **壁面接近**: 視野が狭く、特徴点追跡が困難
-3. **テクスチャ不足**: 単調な壁面で特徴点が見つからない
+1. **Dark environments**: Camera feed is dark, insufficient feature points
+2. **Close to walls**: Narrow field of view, difficult to track feature points
+3. **Lack of texture**: Monotonous walls where feature points cannot be found
 
-→ **ロボットが静止していても、急速に平面を移動しているように暴走**
+→ **Even when the robot is stationary, odometry drifts rapidly as if moving across a plane**
 
-## 解決策: ZUPT理論
+## Solution: ZUPT Theory
 
-ZUPT (Zero-Velocity Update) の原理：
+ZUPT (Zero-Velocity Update) principle:
 
 ```
-IF (IMUの加速度 ≈ 0) AND (IMUの角速度 ≈ 0):
-    → ロボットは静止している
+IF (IMU acceleration ≈ 0) AND (IMU angular velocity ≈ 0):
+    → Robot is stationary
 
-    IF Visual Odometryが移動を報告:
-        → 異常値として補正（速度をゼロに）
+    IF Visual Odometry reports movement:
+        → Correct as anomaly (set velocity to zero)
 ```
 
-### アルゴリズムの詳細
+### Algorithm Details
 
-1. **静止検出**:
-   - IMUデータをウィンドウバッファに保存（例: 15サンプル）
-   - 加速度ノルム < 0.5 m/s² AND 角速度ノルム < 0.1 rad/s
-   - ウィンドウ内の70%以上が条件を満たす → 静止判定
+1. **Stationary Detection**:
+   - Store IMU data in a window buffer (e.g., 15 samples)
+   - Acceleration norm < 0.5 m/s² AND angular velocity norm < 0.1 rad/s
+   - If 70% or more of the window meets conditions → Stationary
 
-2. **オドメトリ補正**:
-   - **静止時**: 速度を強制的にゼロに、位置を前回値に固定
-   - **移動時**: 急激な速度変化を制限（ジャンプ抑制）
+2. **Odometry Correction**:
+   - **When stationary**: Force velocity to zero, fix position to previous value
+   - **When moving**: Limit sudden velocity changes (jump suppression)
 
-3. **平滑化**:
-   - 速度変化を滑らかにする
-   - 暴走による異常な加速を防ぐ
+3. **Smoothing**:
+   - Smooth velocity changes
+   - Prevent abnormal acceleration due to drift
 
-## 使用方法
+## Usage
 
-### 基本起動
+### Basic Launch
 
 ```bash
-# ZEDカメラを起動（別ターミナル）
+# Launch ZED camera (separate terminal)
 ros2 launch zed_wrapper zed_camera.launch.py
 
-# ZUPTフィルターを起動
+# Launch ZUPT filter
 ros2 launch zed_zupt_wrapper zed_zupt_filter.launch.py
 ```
 
-### トピック
+### Topics
 
-#### 入力
+#### Input
 
-- `/zed/zed_node/odom` - ZED Visual Odometry（元データ）
-- `/zed/zed_node/imu/data` - ZED IMUデータ（400Hz）
+- `/zed/zed_node/odom` - ZED Visual Odometry (raw data)
+- `/zed/zed_node/imu/data` - ZED IMU data (400Hz)
 
-#### 出力
+#### Output
 
-- `/zed/zed_node/odom_zupt` - ZUPTフィルタ済みオドメトリ（推奨）
-- `/zupt/status` - ZUPTステータス（デバッグ用）
+- `/zed/zed_node/odom_zupt` - ZUPT-filtered odometry (recommended)
+- `/zupt/status` - ZUPT status (for debugging)
 
-### パラメータ調整
+### Parameter Tuning
 
 [config/zed_zupt_params.yaml](config/zed_zupt_params.yaml)
 
-#### 静止検出パラメータ
+#### Stationary Detection Parameters
 
 ```yaml
-# 加速度閾値（m/s²）
-# 低い → 厳格な静止判定、高い → 緩い静止判定
+# Acceleration threshold (m/s²)
+# Low → Strict stationary detection, High → Loose stationary detection
 zupt_accel_threshold: 0.5
 
-# 角速度閾値（rad/s）
+# Angular velocity threshold (rad/s)
 zupt_gyro_threshold: 0.1
 
-# ウィンドウサイズ（サンプル数）
-# 小さい → 反応が速い、大きい → 安定
+# Window size (number of samples)
+# Small → Faster response, Large → More stable
 zupt_window_size: 15
 
-# 信頼度閾値（0.0-1.0）
-# 高い → 確実な静止時のみ補正
+# Confidence threshold (0.0-1.0)
+# High → Correct only when stationary is certain
 zupt_confidence_threshold: 0.7
 ```
 
-#### 補正パラメータ
+#### Correction Parameters
 
 ```yaml
-# 最大速度ジャンプ（m/s）
-# 暴走による急激な速度変化を制限
+# Maximum velocity jump (m/s)
+# Limit sudden velocity changes due to drift
 max_velocity_jump: 0.5
 
-# 最大角速度ジャンプ（rad/s）
+# Maximum angular velocity jump (rad/s)
 max_angular_jump: 1.0
 ```
 
-## zed2i_nvblox_fixed.launch.pyへの統合
+## Integration into zed2i_nvblox_fixed.launch.py
 
-メインのLaunchファイルに統合する場合：
+To integrate into the main launch file:
 
 ```python
-# ZUPTフィルターノードを追加
+# Add ZUPT filter node
 zed_zupt_dir = get_package_share_directory('zed_zupt_wrapper')
 zed_zupt_config = os.path.join(zed_zupt_dir, 'config', 'zed_zupt_params.yaml')
 
@@ -115,7 +115,7 @@ zed_zupt_node = Node(
     emulate_tty=True,
 )
 
-# ZEDカメラ起動後に実行（例: 3秒後）
+# Execute after ZED camera launch (e.g., after 3 seconds)
 load_zed_zupt = TimerAction(
     period=3.0,
     actions=[zed_zupt_node]
@@ -123,143 +123,143 @@ load_zed_zupt = TimerAction(
 actions.append(load_zed_zupt)
 ```
 
-その後、nvbloxやナビゲーションで使用するオドメトリを変更：
+Then, change the odometry used by nvblox and navigation:
 
 ```python
-# nvbloxのリマッピング
+# nvblox remapping
 nvblox_remappings = [
     # ...
-    ('pose', '/zed/zed_node/odom_zupt'),  # ZUPTフィルタ済みを使用
+    ('pose', '/zed/zed_node/odom_zupt'),  # Use ZUPT-filtered odometry
 ]
 ```
 
-## デバッグ
+## Debugging
 
-### ZUPTステータス確認
+### Check ZUPT Status
 
 ```bash
 ros2 topic echo /zupt/status
 ```
 
-出力:
+Output:
 ```yaml
 linear:
-  x: 1.0  # 1.0 = 静止中, 0.0 = 移動中
-  y: 0.23 # 平均加速度（m/s²）
-  z: 0.05 # 平均角速度（rad/s）
+  x: 1.0  # 1.0 = Stationary, 0.0 = Moving
+  y: 0.23 # Average acceleration (m/s²)
+  z: 0.05 # Average angular velocity (rad/s)
 angular:
-  x: 142.0  # ZUPT補正回数
+  x: 142.0  # ZUPT correction count
 ```
 
-### オドメトリ比較
+### Compare Odometry
 
 ```bash
-# 元のオドメトリ
+# Original odometry
 ros2 topic echo /zed/zed_node/odom
 
-# ZUPTフィルタ済み
+# ZUPT-filtered
 ros2 topic echo /zed/zed_node/odom_zupt
 
-# 差分確認（別ターミナル）
+# Check difference (separate terminal)
 ros2 run plotjuggler plotjuggler
 ```
 
-### パラメータ動的変更
+### Dynamic Parameter Changes
 
 ```bash
-# ZUPT無効化（テスト用）
+# Disable ZUPT (for testing)
 ros2 param set /zed_zupt_filter_node enable_zupt false
 
-# 閾値変更
+# Change threshold
 ros2 param set /zed_zupt_filter_node zupt_accel_threshold 0.3
 ```
 
-## トラブルシューティング
+## Troubleshooting
 
-### 問題1: ZUPTが効きすぎて、実際の移動も止まる
+### Issue 1: ZUPT is too aggressive, actual movement is also stopped
 
-**原因**: 閾値が高すぎる
+**Cause**: Thresholds are too high
 
-**対処**:
+**Solution**:
 ```yaml
-zupt_accel_threshold: 0.3  # 0.5 → 0.3 に下げる
-zupt_gyro_threshold: 0.05  # 0.1 → 0.05 に下げる
+zupt_accel_threshold: 0.3  # Decrease from 0.5 → 0.3
+zupt_gyro_threshold: 0.05  # Decrease from 0.1 → 0.05
 ```
 
-### 問題2: まだオドメトリが暴走する
+### Issue 2: Odometry still drifts
 
-**原因**: 閾値が低すぎる、または信頼度が低すぎる
+**Cause**: Thresholds are too low, or confidence is too low
 
-**対処**:
+**Solution**:
 ```yaml
-zupt_accel_threshold: 0.7  # 0.5 → 0.7 に上げる
-zupt_confidence_threshold: 0.8  # 0.7 → 0.8 に上げる
-zupt_window_size: 20  # 15 → 20 に増やす
+zupt_accel_threshold: 0.7  # Increase from 0.5 → 0.7
+zupt_confidence_threshold: 0.8  # Increase from 0.7 → 0.8
+zupt_window_size: 20  # Increase from 15 → 20
 ```
 
-### 問題3: 反応が遅い
+### Issue 3: Response is slow
 
-**原因**: ウィンドウサイズが大きすぎる
+**Cause**: Window size is too large
 
-**対処**:
+**Solution**:
 ```yaml
-zupt_window_size: 10  # 15 → 10 に減らす
+zupt_window_size: 10  # Decrease from 15 → 10
 ```
 
-## 技術詳細
+## Technical Details
 
-### ZUPT検出アルゴリズム
+### ZUPT Detection Algorithm
 
 ```cpp
-// 1. IMUバッファから加速度・角速度を抽出
+// 1. Extract acceleration and angular velocity from IMU buffer
 for (const auto& imu : imu_buffer_) {
-    // 重力補償
+    // Gravity compensation
     accel_norm = sqrt(ax² + ay² + (az - 9.81)²);
     gyro_norm = sqrt(gx² + gy² + gz²);
 
-    // 閾値判定
+    // Threshold check
     if (accel_norm < threshold_accel && gyro_norm < threshold_gyro) {
         stationary_count++;
     }
 }
 
-// 2. 信頼度計算
+// 2. Calculate confidence
 confidence = stationary_count / buffer_size;
 
-// 3. 静止判定
+// 3. Determine if stationary
 is_stationary = (confidence >= confidence_threshold);
 ```
 
-### オドメトリ補正
+### Odometry Correction
 
 ```cpp
 if (is_stationary) {
-    // 静止時: 速度ゼロ、位置固定
+    // When stationary: Zero velocity, fix position
     odom.twist.twist.linear = {0, 0, 0};
     odom.twist.twist.angular = {0, 0, 0};
-    odom.pose.pose = last_pose;  // 位置を前回値に固定
+    odom.pose.pose = last_pose;  // Fix position to previous value
 } else {
-    // 移動時: ジャンプ制限
+    // When moving: Limit jumps
     odom.twist.twist.linear.x = limit_jump(
         new_velocity, old_velocity, max_jump
     );
 }
 ```
 
-## パフォーマンス
+## Performance
 
-- **CPU使用率**: 約1-2%（ZED IMU 400Hzで動作）
-- **遅延**: 約25-50ms（ウィンドウサイズ依存）
-- **メモリ**: 約10MB
+- **CPU Usage**: Approximately 1-2% (running with ZED IMU at 400Hz)
+- **Latency**: Approximately 25-50ms (depends on window size)
+- **Memory**: Approximately 10MB
 
-## 参考文献
+## References
 
 - Skog, I., et al. "Zero-velocity detection—An algorithm evaluation." IEEE Transactions on Biomedical Engineering (2010)
 - Jimenez, A. R., et al. "A comparison of Pedestrian Dead-Reckoning algorithms using a low-cost MEMS IMU." (2009)
 
 ---
 
-**作成日**: 2025-10-19
-**バージョン**: 1.0.0
-**対応ZEDモデル**: ZED2i
-**ROS2バージョン**: Humble
+**Created**: 2025-10-19
+**Version**: 1.0.0
+**Supported ZED Model**: ZED2i
+**ROS2 Version**: Humble
